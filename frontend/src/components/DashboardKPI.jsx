@@ -1,9 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Pie } from 'react-chartjs-2';
+
+import { Pie, Line } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title,   PointElement,  LineElement} from 'chart.js';
+
 import './dashboard.css';
-import WebSocketNotifications from  './WebSocketNotifications'
-ChartJS.register(ArcElement, Tooltip, Legend);
+import WebSocketNotifications from './WebSocketNotifications';
+
+// Enregistre les composants de Chart.js une seule fois
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title,  LineElement,  PointElement);
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
@@ -12,6 +16,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [zones, setZones] = useState([]);
   const chartRef = useRef(null);
+const [appelsParMinute, setAppelsParMinute] = useState([]);
 
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:3000');
@@ -26,6 +31,7 @@ export default function Dashboard() {
         setStats(parsed.data);
         setZones(parsed.data.urgencesZones || []);
         setIsLoading(false);
+         setAppelsParMinute(parsed.data.appelparheure || []);
         
       }
       if (parsed.type === 'DERNIERS_APPELS') {
@@ -53,6 +59,7 @@ export default function Dashboard() {
         const statsJson = await statsRes.json();
         setData(statsJson);
         setZones(statsJson.urgencesZones || []);
+        setAppelsParMinute(statsJson.appelparheure || []);
 
         const appelsRes = await fetch('http://localhost:3000/appels/recents');
         const appelsJson = await appelsRes.json();
@@ -144,6 +151,51 @@ const totalPages = Math.ceil(zones.length / zonesPerPage);
     }
   };
 
+const appelsParMinuteData = {
+labels: appelsParMinute.map(appel => {
+  const [heureStr, minuteStr] = appel.time.split(':'); // "15:03" → ["15", "03"]
+  let heure = parseInt(heureStr, 10) + 1;
+  if (heure >= 24) heure -= 24; // pour ne pas dépasser 23h
+  return `${heure.toString().padStart(2, '0')}:${minuteStr}`;
+}),
+
+
+  datasets: [
+    {
+      label: 'Appels par minute',
+      data: appelsParMinute.map(appel => appel.total),
+      borderColor: 'rgba(75, 192, 192, 1)',
+      backgroundColor: 'rgba(75, 192, 192, 0.2)',
+      tension: 0.3,
+      fill: true,
+    }
+  ]
+};
+
+
+const appelsParMinuteOptions = {
+  responsive: true,
+  plugins: {
+    legend: {
+      display: true,
+    },
+  },
+  scales: {
+    x: {
+      title: {
+        display: true,
+        text: 'Heure (HH:MM)'
+      }
+    },
+    y: {
+      title: {
+        display: true,
+        text: 'Nombre d’appels'
+      },
+      beginAtZero: true
+    }
+  }
+};
   const getStatusBadgeClass = (status) => {
     switch(status.toLowerCase()) {
       case 'terminé':
@@ -270,19 +322,30 @@ const totalPages = Math.ceil(zones.length / zonesPerPage);
 </div>
       </div>
 
-      {displayedStats?.repartitionUrgences?.length > 0 && (
-        <div className="data-card full-width">
-          <h2>⚠️ Répartition par gravité</h2>
-          <div className="chart-container">
-            <Pie 
-              ref={chartRef}
-              data={gravityChartData} 
-              options={gravityChartOptions}
-              redraw={false}
-            />
-          </div>
-        </div>
-      )}
+    {displayedStats?.repartitionUrgences?.length > 0 && (
+  <div className="data-card full-width">
+    <h2>📊 Statistiques graphiques</h2>
+    <div className="charts-row">
+      <div className="chart-container half">
+        <h3>⚠️ Répartition par gravité</h3>
+        <Pie 
+          ref={chartRef}
+          data={gravityChartData} 
+          options={gravityChartOptions}
+          redraw={false}
+        />
+      </div>
+    <div className="chart-container half">
+  <h3>📈 Appels par minute</h3>
+  <Line
+    data={appelsParMinuteData}
+    options={appelsParMinuteOptions}
+  />
+</div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }

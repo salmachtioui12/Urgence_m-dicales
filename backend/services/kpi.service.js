@@ -100,6 +100,41 @@ const getStatistiques = async (req, res) => {
     res.status(500).json({ error: 'Erreur lors de la récupération des statistiques.' });
   }
 };
+// Fonction pour récupérer le nombre d'appels par minute depuis minuit aujourd'hui
+async function getAppelsParHeureDepuisDB() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // début de la journée à 00:00:00
+
+  const results = await Appel.aggregate([
+    {
+      $match: {
+        heureAppel: { $gte: today }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          hour: { $hour: "$heureAppel" },
+          minute: { $minute: "$heureAppel" }
+        },
+        total: { $sum: 1 }
+      }
+    },
+    {
+      $sort: {
+        "_id.hour": 1,
+        "_id.minute": 1
+      }
+    }
+  ]);
+
+  // Exemple de format de résultat : [{ time: "08:32", total: 4 }, ...]
+  return results.map(item => ({
+    time: `${item._id.hour.toString().padStart(2, '0')}:${item._id.minute.toString().padStart(2, '0')}`,
+    total: item.total,
+  }));
+}
+
 module.exports = {
   getTotalUrgencesTraitees,
   getTempsMoyenReponse,
@@ -111,4 +146,5 @@ module.exports = {
   getAmbulancesDisponibles,
   getAppelsParGravite,
   getStatistiques,
+  getAppelsParHeureDepuisDB,
 };

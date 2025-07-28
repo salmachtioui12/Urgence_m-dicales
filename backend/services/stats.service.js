@@ -4,7 +4,8 @@ const {
   getTauxOccupation,
   getUrgencesParZone,
   getAmbulancesDisponibles,
-  getRepartitionTypeUrgences
+  getRepartitionTypeUrgences,
+  getAppelsParHeureDepuisDB,
 } = require('../services/kpi.service');
 
 async function getAllStats() {
@@ -14,14 +15,16 @@ async function getAllStats() {
     occupation,
     urgencesZones,
     ambulances,
-    repartitionUrgences
+    repartitionUrgences,
+    appelparheure,
   ] = await Promise.all([
     getTotalUrgencesTraitees(),
     getTempsMoyenReponse(),
     getTauxOccupation(),
     getUrgencesParZone(),
     getAmbulancesDisponibles(),
-    getRepartitionTypeUrgences()
+    getRepartitionTypeUrgences(),
+    getAppelsParHeureDepuisDB(),
   ]);
 
   return {
@@ -30,7 +33,8 @@ async function getAllStats() {
     occupation,
     urgencesZones,
     ambulances,
-    repartitionUrgences
+    repartitionUrgences,
+    appelparheure,
   };
 }
 
