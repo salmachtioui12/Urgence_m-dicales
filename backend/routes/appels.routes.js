@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Appel = require('../models/Appel'); 
 const { getAllStats } = require('../services/stats.service');
+const Hopital = require('../models/Hopital');
+const Ambulance = require('../models/Ambulance');
+
+const verifyToken = require('../middlewares/auth.middleware'); // ✅ import correct
 const { notifierStatistiques } = require('../websocket');
 const {
   getAppels,
@@ -141,6 +145,35 @@ router.get('/recents', async (req, res) => {
   } catch (err) {
     console.error("Erreur récupération derniers appels :", err);
     res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+router.get('/hopital', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id; // ← à adapter selon ton système d'authentification
+
+    // 1. Retrouver l'hôpital lié à ce compte utilisateur
+    const hopital = await Hopital.findOne({ userId });
+    if (!hopital) {
+      return res.status(404).json({ message: 'Hôpital non trouvé pour cet utilisateur.' });
+    }
+
+    // 2. Récupérer les ambulances de cet hôpital
+    const ambulances = await Ambulance.find({ hopitalId: hopital._id });
+    const ambulanceIds = ambulances.map(a => a._id);
+
+    if (ambulanceIds.length === 0) {
+      return res.json([]); // Aucun appel s'il n'y a pas d'ambulance
+    }
+
+    // 3. Récupérer les appels affectés à ces ambulances
+    const appels = await Appel.find({ ambulanceAffectee: { $in: ambulanceIds } })
+                              .sort({ createdAt: -1 })
+                              .limit(10); // limite à 10 derniers appels
+
+    res.json(appels);
+  } catch (error) {
+    console.error("Erreur récupération appels par hôpital:", error);
+    res.status(500).json({ message: "Erreur serveur lors de la récupération des appels." });
   }
 });
 

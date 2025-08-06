@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import 'flag-icons/css/flag-icons.min.css';
 
 export default function LayoutHopital() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 970);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hasNotifications, setHasNotifications] = useState(true);
+
+  // Vérifie si la route actuelle est la page des appels
+  const isAppelsPage = location.pathname === "/hopital/appels";
 
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 970;
       setIsMobile(mobile);
-      if (!mobile) setMenuOpen(false); // Fermer le menu si on repasse en desktop
+      if (!mobile) setMenuOpen(false);
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -74,17 +79,43 @@ export default function LayoutHopital() {
     marginTop: isMobile ? "1rem" : "0",
   };
 
+  const notificationButtonStyle = {
+    backgroundColor: isAppelsPage ? "#1e88e5" : "transparent",
+    border: "none",
+    cursor: "pointer",
+    padding: "0.75rem",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: "1rem",
+    borderRadius: "50%",
+    transition: "all 0.3s ease",
+    width: "48px",
+    height: "48px",
+    position: "relative",
+  };
+
+  const notificationBadgeStyle = {
+    position: "absolute",
+    top: "8px",
+    right: "8px",
+    backgroundColor: "#f44336",
+    color: "white",
+    borderRadius: "50%",
+    width: "18px",
+    height: "18px",
+    fontSize: "0.7rem",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    pointerEvents: "none",
+  };
+
   const mainStyle = {
     padding: "2rem",
     backgroundColor: "#f4f6f8",
     minHeight: "100vh",
     fontFamily: "Arial, sans-serif",
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
   };
 
   const burgerStyle = {
@@ -94,6 +125,17 @@ export default function LayoutHopital() {
     fontSize: "1.5rem",
     cursor: "pointer",
     color: "#2c3e50",
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
+  const handleNotificationClick = () => {
+    setHasNotifications(false);
+    navigate("/hopital/appels");
   };
 
   return (
@@ -144,13 +186,24 @@ export default function LayoutHopital() {
           </li>
           <li>
             <NavLink
-              to="/hopital/notifications"
+              to="/hopital/affectation"
               style={({ isActive }) => ({
                 ...linkStyle,
                 ...(isActive ? activeLinkStyle : {}),
               })}
             >
-              Notifications
+              Affectations
+            </NavLink>
+          </li>
+            <li>
+            <NavLink
+              to="/hopital/appels"
+              style={({ isActive }) => ({
+                ...linkStyle,
+                ...(isActive ? activeLinkStyle : {}),
+              })}
+            >
+              Appels
             </NavLink>
           </li>
           <li>
@@ -164,29 +217,88 @@ export default function LayoutHopital() {
               Profil
             </NavLink>
           </li>
+          
           {isMobile && (
-            <li>
-              <button
-                onClick={handleLogout}
-                style={buttonStyle}
-                onMouseEnter={(e) => (e.target.style.backgroundColor = "#d32f2f")}
-                onMouseLeave={(e) => (e.target.style.backgroundColor = "#f44336")}
-              >
-                Déconnexion
-              </button>
-            </li>
+            <>
+              <li>
+                <button
+                  onClick={handleNotificationClick}
+                  style={{
+                    ...notificationButtonStyle,
+                    ':hover': {
+                      backgroundColor: isAppelsPage ? '#1e88e5' : '#f0f7ff'
+                    }
+                  }}
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke={isAppelsPage ? "white" : "currentColor"} 
+                    width="24" 
+                    height="24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth="2" 
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" 
+                    />
+                  </svg>
+                  {hasNotifications && <span style={notificationBadgeStyle}>!</span>}
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={handleLogout}
+                  style={buttonStyle}
+                  onMouseEnter={(e) => (e.target.style.backgroundColor = "#d32f2f")}
+                  onMouseLeave={(e) => (e.target.style.backgroundColor = "#f44336")}
+                >
+                  Déconnexion
+                </button>
+              </li>
+            </>
           )}
         </ul>
 
         {!isMobile && (
-          <button
-            onClick={handleLogout}
-            style={buttonStyle}
-            onMouseEnter={(e) => (e.target.style.backgroundColor = "#d32f2f")}
-            onMouseLeave={(e) => (e.target.style.backgroundColor = "#f44336")}
-          >
-            Déconnexion
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <button
+              onClick={handleNotificationClick}
+              style={{
+                ...notificationButtonStyle,
+                ':hover': {
+                  backgroundColor: isAppelsPage ? '#1e88e5' : '#f0f7ff'
+                }
+              }}
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke={isAppelsPage ? "white" : "currentColor"} 
+                width="24" 
+                height="24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth="2" 
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" 
+                />
+              </svg>
+              {hasNotifications && <span style={notificationBadgeStyle}>!</span>}
+            </button>
+            <button
+              onClick={handleLogout}
+              style={buttonStyle}
+              onMouseEnter={(e) => (e.target.style.backgroundColor = "#d32f2f")}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = "#f44336")}
+            >
+              Déconnexion
+            </button>
+          </div>
         )}
       </nav>
       <main style={mainStyle}>

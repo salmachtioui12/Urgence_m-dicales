@@ -31,7 +31,7 @@ import ProfilHopital from "./pages_hopital/pages/ProfilHopital";
 import NotificationHopital from "./pages_hopital/pages/NotificationHopital";
 import Demandes_approuves from "./pages_hopital/pages/Demandes_approuves";
 import ModifierProfilHopital from "./pages_hopital/pages/ModifierProfilHopital";
-
+import Affectation from "./pages_hopital/pages/affectation"
 // 🚑 Pages Ambulancier
 import ListeAppelsAmbulancier from "./pages_ambilancier/pages/ListeAppelsAmbulancier";
 import DetailsAppel from "./pages_ambilancier/pages/DetailsAppel";
@@ -117,8 +117,9 @@ export default function AppRoutes() {
           <Route path="demandes" element={<DemandesAmbulanciers />} />
           <Route path="profil" element={<ProfilHopital />} />
           <Route path="ambulanciers" element={<Demandes_approuves />} />
-          <Route path="notifications" element={<NotificationHopital />} />
+          <Route path="appels" element={<NotificationHopital />} />
           <Route path="modification" element={<ModifierProfilHopital />} />
+          <Route path="affectation" element={<Affectation />} />
         </Route>
       )}
 

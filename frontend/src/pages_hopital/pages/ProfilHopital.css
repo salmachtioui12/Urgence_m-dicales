@@ -1,6 +1,6 @@
 .profil-container {
-  max-width: 1400px;
-  margin: 2rem auto;
+  max-width: 1300px;
+  margin: 5rem auto;
   padding: 2rem;
   font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background-color: #f8fafc;
@@ -12,7 +12,7 @@
   align-items: center;
   margin-bottom: 3rem;
   padding: 1.5rem;
-  background-color: white;
+  
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }

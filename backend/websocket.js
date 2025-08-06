@@ -1,14 +1,31 @@
 const WebSocket = require('ws');
 let wss;
-
+const clientsMap = new Map(); // Map userId -> ws connection
 function initWebSocket(server) {
   wss = new WebSocket.Server({ server });
 
   wss.on('connection', (ws) => {
-    console.log('Client WebSocket connecté');
+    console.log('🟢 Client WebSocket connecté');
+
+    // Lors de la connexion, le client doit s'authentifier (ex : envoyer son userId)
+    ws.on('message', (message) => {
+      try {
+        const parsed = JSON.parse(message);
+        if (parsed.type === 'REGISTER' && parsed.userId) {
+          clientsMap.set(parsed.userId, ws);
+          ws.userId = parsed.userId;
+          console.log(`✅ Ambulancier enregistré: ${parsed.userId}`);
+        }
+      } catch (err) {
+        console.error('❌ Erreur de message WebSocket:', err.message);
+      }
+    });
 
     ws.on('close', () => {
-      console.log('Client WebSocket déconnecté');
+      console.log('🔴 Client WebSocket déconnecté');
+      if (ws.userId) {
+        clientsMap.delete(ws.userId);
+      }
     });
   });
 }
@@ -55,5 +72,14 @@ function notifierDerniersAppels(appels) {
     }
   });
 }
+function notifierAmbulancierIntervention(userId, data) {
+  const ws = clientsMap.get(userId);
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({
+      type: 'NOUVELLE_INTERVENTION',
+      data
+    }));
+  }
+}
 
-module.exports = { initWebSocket, notifierCasCritique ,notifierStatistiques,notifierDerniersAppels};
+module.exports = { initWebSocket, notifierCasCritique ,notifierStatistiques,notifierDerniersAppels,notifierAmbulancierIntervention};

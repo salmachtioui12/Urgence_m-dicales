@@ -483,8 +483,8 @@ export default function ModifierProfilHopital() {
       
         /* Header */
         .profil-header {
-          background: linear-gradient(135deg, var(--primary), #b3b4f726);
-          color: white;
+         
+         color: "white",
           padding: 2rem;
           border-radius: var(--radius-lg);
           margin-bottom: 2rem;

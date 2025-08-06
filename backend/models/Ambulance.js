@@ -12,6 +12,11 @@ const AmbulanceSchema = new mongoose.Schema({
     enum: ['disponible', 'en mission'],
     default: 'disponible',
   },
+   statut: {
+    type: String,
+    enum: ['disponible', 'affecter'],
+    default: 'disponible',
+  },
   position: {
     lat: Number,
     lng: Number,

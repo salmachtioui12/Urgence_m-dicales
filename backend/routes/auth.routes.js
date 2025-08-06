@@ -167,6 +167,7 @@ router.get('/demandes/ambulanciers/:hopitalNom', verifyToken, async (req, res) =
   }
 });
 
+
 // Valider un ambulancier (protégé)
 const Ambulancier = require('../models/Ambulancier'); // à importer tout en haut
 
@@ -183,12 +184,17 @@ router.patch('/valider/ambulancier/:id', verifyToken, async (req, res) => {
     // Mise à jour du statut
     user.status = 'approuve';
     await user.save();
-
+ // Récupérer l'hôpital lié au user qui valide (depuis token)
+    const hopital = await Hopital.findOne({ userId: req.user.id });
+    if (!hopital) {
+      return res.status(404).json({ message: "Hôpital valideur introuvable" });
+    }
     // Créer un ambulancier à partir des détails
     const newAmbulancier = new Ambulancier({
       ...user.details, // attention : structure bien les détails
       email: user.email,
-      userId: user._id
+      userId: user._id,
+        emailHopital: hopital.contact.email || hopital.userId.email || "",
     });
 
     await newAmbulancier.save();

@@ -10,21 +10,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 3rem;  /* Plus d'espace en bas */
+  margin-bottom: 3rem;
   padding: 1.5rem;
-  background-color: white;
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6); /* Supprimer les guillemets */
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        background: linear-gradient(135deg, var(--primary), #9e9fd1ff);
+  color: white; /* Ajouter pour que le texte soit lisible sur le dégradé */
 }
 
 .profil-header h1 {
-  color: #2c3e50;
-  font-size: 2.2rem;  /* Taille de police augmentée */
+  color: white; /* Changer la couleur du texte pour contraste */
+  font-size: 2.2rem;
   margin: 0;
   font-weight: 700;
 }
-
 .update-button {
   background-color: #4299e1;
   color: white;

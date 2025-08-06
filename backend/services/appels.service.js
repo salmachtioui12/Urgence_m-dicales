@@ -2,12 +2,14 @@ const axios = require("axios");
 const Appel = require("../models/Appel");
 const Ambulance = require("../models/Ambulance");
 const Intervention = require("../models/Intervention");
+const AffectationAmbulancier = require("../models/AffectationAmbulancier");
+
 const { notifierCasCritique } = require('../websocket'); // à adapter selon ton arborescence
 const { getAllStats } = require('./stats.service');
 const { notifierStatistiques } = require('../websocket');
 const { notifierDerniersAppels } = require('../websocket');
 let intervalId = null;
-
+const { notifierAmbulancierIntervention } = require("../websocket");
 function genererGravite() {
   const r = Math.random();
   if (r < 0.2) return "critique";
@@ -146,18 +148,41 @@ async function prioriserEtAffecterAmbulances() {
         etat: "en intervention",
         ambulanceAffectee: lockedAmb._id,
       });
+// Trouver l'ambulancier affecté à cette ambulance
 
-      //  Créer l’intervention
-      await Intervention.create({
-        appelId: appel._id,
-        ambulanceId: lockedAmb._id,
-        gravite: appel.gravite,
-        localisation: appel.localisation,
-        patientName: appel.patientName,
-        debutIntervention: new Date(),
-        finEstimee: new Date(Date.now() + 5 * 60000),
-        statut: "en cours",
-      });
+
+const affectation = await AffectationAmbulancier.findOne({
+  ambulanceId: lockedAmb._id,
+  dateFin: null
+});
+
+let ambulancier = null;
+if (affectation?.ambulancierId) {
+  ambulancier = await require('../models/Ambulancier').findById(affectation.ambulancierId);
+}
+
+const hopitalId = lockedAmb.hopitalId || null;
+
+const intervention = await Intervention.create({
+  appelId: appel._id,
+  ambulanceId: lockedAmb._id,
+  ambulancierId: affectation?.ambulancierId || null,
+  hopitalId: hopitalId,
+  gravite: appel.gravite,
+  localisation: appel.localisation,
+  patientName: appel.patientName,
+  debutIntervention: new Date(),
+  finEstimee: new Date(Date.now() + 5 * 60000),
+  statut: "en cours",
+});
+
+// Sécuriser l'accès à userId
+if (ambulancier?.userId) {
+  notifierAmbulancierIntervention(ambulancier.userId.toString(), {
+    appel,
+    intervention,
+  });
+}
 
       console.log(` Ambulance ${lockedAmb._id} (type ${lockedAmb.type}) affectée à l'appel ${appel._id}`);
         //  Notifier nouvelles stats après chaque appel généré
@@ -207,6 +232,7 @@ async function updateAppelStatus(id, newStatus) {
 
   return appel;
 }
+
 
 
 async function affecterAmbulance(idAppel, idAmbulance) {

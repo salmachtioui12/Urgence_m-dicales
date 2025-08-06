@@ -33,7 +33,8 @@ app.use('/agents', require('./routes/agents.routes'));
 app.use('/api/hopitaux', require('./routes/hopitaux.routes'));
 app.use('/notifications', require('./routes/notifications.routes'));
 app.use('/api/kpi', kpiRoutes);
-
+const affectationsRouter = require('./routes/affectations.routes');
+app.use('/api/affectations', affectationsRouter);
 // WebSocket
 initWebSocket(server);
 const ambulancierRoutes = require('./routes/ambulancier.routes');

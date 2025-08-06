@@ -23,7 +23,8 @@ const AmbulancierSchema = new mongoose.Schema({
   permis: PermisSchema,
   certifications: [String],
   statut: { type: String, default: 'disponible' },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+   emailHopital: String,
 });
 
 module.exports = mongoose.model('Ambulancier', AmbulancierSchema);
