@@ -24,7 +24,7 @@ import ListeAmbulances from "./pages/Ambulances/ListeAmbulances";
 import ListeInterventions from "./pages/Interventions/ListeInterventions";
 import DemandesAmbulanciers from "./pages_hopital/pages/DemandesAmbulanciers";
 import NotificationsPage from "./components/WebSocketNotifications";
-
+import Listeusers from "./components/listeusers/listeusers";
 // 🏥 Pages Hopital
 import DashboardHopital from "./pages_hopital/pages/DashbordHopital";
 import ProfilHopital from "./pages_hopital/pages/ProfilHopital";
@@ -100,6 +100,7 @@ export default function AppRoutes() {
           <Route path="interventions" element={<ListeInterventions />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="demandes-ambulanciers" element={<DemandesAmbulanciers />} />
+           <Route path="/statistiques" element={<Listeusers/>} />
         </Route>
       )}
 
@@ -120,6 +121,8 @@ export default function AppRoutes() {
           <Route path="appels" element={<NotificationHopital />} />
           <Route path="modification" element={<ModifierProfilHopital />} />
           <Route path="affectation" element={<Affectation />} />
+         
+          
         </Route>
       )}
 

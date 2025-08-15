@@ -35,6 +35,7 @@ app.use('/notifications', require('./routes/notifications.routes'));
 app.use('/api/kpi', kpiRoutes);
 const affectationsRouter = require('./routes/affectations.routes');
 app.use('/api/affectations', affectationsRouter);
+app.use('/users',require('./routes/listeusers.route'));
 // WebSocket
 initWebSocket(server);
 const ambulancierRoutes = require('./routes/ambulancier.routes');

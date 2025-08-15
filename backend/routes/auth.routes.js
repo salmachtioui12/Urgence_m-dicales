@@ -195,6 +195,7 @@ router.patch('/valider/ambulancier/:id', verifyToken, async (req, res) => {
       email: user.email,
       userId: user._id,
         emailHopital: hopital.contact.email || hopital.userId.email || "",
+        
     });
 
     await newAmbulancier.save();

@@ -3,23 +3,45 @@ const router = express.Router();
 const Affectation = require('../models/AffectationAmbulancier');
 const Ambulancier = require('../models/Ambulancier');
 const Ambulance = require('../models/Ambulance');
+const Hopital = require('../models/Hopital');
 
 // 🔐 Middleware pour vérifier le token
 const verifyToken = require('../middlewares/auth.middleware');
 
 // GET ambulanciers & ambulances de l'hôpital connecté
+const mongoose = require("mongoose");
+
 router.get('/ressources', verifyToken, async (req, res) => {
   try {
-    const hopitalId = req.userId;
+    const userId = req.user.id;
+    console.log("userId dans req:", userId);
 
-    const ambulanciers = await Ambulancier.find({ hopital: hopitalId });
-    const ambulances = await Ambulance.find({ hopital: hopitalId });
+    // Récupérer l'hôpital du user connecté
+    const hopital = await Hopital.findOne({ userId });
+    if (!hopital) {
+      return res.status(404).json({ error: 'Hôpital introuvable' });
+    }
+
+    console.log("Hopital connecté:", hopital._id, "Email:", hopital.contact.email);
+
+    // Récupérer les ambulanciers via l'email d'hôpital
+    const ambulanciers = await Ambulancier.find({ emailHopital: hopital.contact.email });
+
+    // Récupérer les ambulances via hopitalId
+    const ambulances = await Ambulance.find({ hopitalId: hopital._id });
 
     res.json({ ambulanciers, ambulances });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
+
+
+
+
+
+
 
 // POST créer affectation
 // POST créer affectation
