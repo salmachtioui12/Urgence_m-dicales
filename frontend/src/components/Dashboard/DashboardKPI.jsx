@@ -220,9 +220,7 @@ const appelsParMinuteOptions = {
   return (
     
     <div className="dashboard-container">
-      <div className="min-h-screen bg-gray-100 p-6">
-      <WebSocketNotifications />
-    </div>
+     
       <div className="dashboard-header">
         <h1>Tableau de bord - Urgences</h1>
       </div>

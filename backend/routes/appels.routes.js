@@ -4,7 +4,7 @@ const Appel = require('../models/Appel');
 const { getAllStats } = require('../services/stats.service');
 const Hopital = require('../models/Hopital');
 const Ambulance = require('../models/Ambulance');
-
+const Intervention = require('../models/Intervention');
 const verifyToken = require('../middlewares/auth.middleware'); // ✅ import correct
 const { notifierStatistiques } = require('../websocket');
 const {
@@ -19,10 +19,39 @@ const {
 
 // Récupérer tous les appels
 router.get('/', async (req, res) => {
-  const appels = await getAppels();
-  res.json(appels);
-});
+  try {
+    const appels = await Appel.find()
+      .populate({
+        path: 'ambulanceAffectee',
+        model: 'Ambulance',
+        populate: [
+          { path: 'hopitalId', model: 'Hopital' } // info sur l'hôpital de l'ambulance
+        ]
+      })
+      .lean(); // lean() pour retourner des objets JS simples
 
+    // Pour chaque appel, récupérer les interventions et les ambulanciers associés
+    const appelsAvecDetails = await Promise.all(
+      appels.map(async (appel) => {
+        const interventions = await Intervention.find({ appelId: appel._id })
+          .populate('ambulanceId')
+          .populate('ambulancierId')
+          .populate('hopitalId')
+          .lean();
+
+        return {
+          ...appel,
+          interventions,
+        };
+      })
+    );
+
+    res.json(appelsAvecDetails);
+  } catch (err) {
+    console.error("Erreur récupération appels :", err);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+});
  //Mettre à jour le statut
 router.put('/:id/status', async (req, res) => {
   const appel = await updateAppelStatus(req.params.id, req.body.status);

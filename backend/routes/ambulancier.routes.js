@@ -111,6 +111,35 @@ router.delete('/ambulancier/:id', verifyToken, async (req, res) => {
     res.status(500).json({ message: "Erreur serveur lors de la suppression.", error });
   }
 });
+// 📌 GET tous les ambulanciers avec leurs informations complètes
+router.get("/ambulanciers/all", verifyToken, async (req, res) => {
+  try {
+    const ambulanciers = await Ambulancier.find()
+      .populate("userId", "email role status createdAt") // Infos de l'utilisateur lié
+      .lean();
+
+    // Ajout des infos hôpital pour chaque ambulancier
+    const result = await Promise.all(
+      ambulanciers.map(async (a) => {
+        let hopital = null;
+        if (a.hopitalId) {
+          hopital = await Hopital.findById(a.hopitalId).select("nom contact region");
+        } else if (a.emailHopital) {
+          hopital = await Hopital.findOne({ "contact.email": a.emailHopital }).select("nom contact region");
+        }
+        return {
+          ...a,
+          hopital: hopital || null
+        };
+      })
+    );
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("💥 Erreur récupération ambulanciers:", err);
+    res.status(500).json({ message: "Erreur serveur lors de la récupération des ambulanciers." });
+  }
+});
 
 
 module.exports = router;

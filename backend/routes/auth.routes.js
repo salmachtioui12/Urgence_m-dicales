@@ -175,32 +175,35 @@ router.patch('/valider/ambulancier/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
 
   try {
+    // 1️⃣ On récupère le user à valider
     const user = await User.findById(id);
 
     if (!user || user.role !== 'ambulancier') {
       return res.status(404).json({ message: "Ambulancier introuvable" });
     }
 
-    // Mise à jour du statut
+    // 2️⃣ On met à jour le statut du user
     user.status = 'approuve';
     await user.save();
- // Récupérer l'hôpital lié au user qui valide (depuis token)
+
+    // 3️⃣ On récupère l'hôpital du user connecté (depuis token)
     const hopital = await Hopital.findOne({ userId: req.user.id });
     if (!hopital) {
       return res.status(404).json({ message: "Hôpital valideur introuvable" });
     }
-    // Créer un ambulancier à partir des détails
+
+    // 4️⃣ On crée un ambulancier lié à cet hôpital
     const newAmbulancier = new Ambulancier({
-      ...user.details, // attention : structure bien les détails
+      ...user.details, // merge avec les détails
       email: user.email,
       userId: user._id,
-        emailHopital: hopital.contact.email || hopital.userId.email || "",
-        
+      hopitalId: hopital._id, // ✅ ajoute l'id ObjectId de l'hôpital
+      emailHopital: hopital.contact?.email || "",
     });
 
     await newAmbulancier.save();
 
-    res.json({ message: 'Ambulancier validé et enregistré avec succès' });
+    res.json({ message: 'Ambulancier validé et enregistré avec succès', ambulancier: newAmbulancier });
   } catch (err) {
     console.error("Erreur validation ambulancier:", err);
     res.status(500).json({ message: 'Erreur lors de la validation.' });

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import alertSound from '../assets/alert.mp3';
-import styles from './WebSocketNotificationscss'; 
-const  WebSocketNotifications = () => {
+import { Bell, Volume2, VolumeX, X, Trash2 } from 'lucide-react';
+
+const WebSocketNotifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -23,9 +23,10 @@ const  WebSocketNotifications = () => {
   }, []);
 
   useEffect(() => {
-    audioRef.current = new Audio(alertSound);
+    // Initialiser l'audio
+    audioRef.current = new Audio('/alert.mp3');
 
-    const fetchInitial = async () => {
+    const fetchInitialNotifications = async () => {
       try {
         const res = await fetch('http://localhost:3000/notifications');
         const data = await res.json();
@@ -48,36 +49,36 @@ const  WebSocketNotifications = () => {
       };
 
       ws.onmessage = (event) => {
-  try {
-    const payload = JSON.parse(event.data);
-    if (payload.type === 'ALERTE_CRITIQUE') {
-      const newNotif = payload.data;
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload.type === 'ALERTE_CRITIQUE') {
+            const newNotif = payload.data;
 
-      // Vérifie si la notification existe déjà (même id ou même contenu)
-      setNotifications(prev => {
-        const alreadyExists = prev.some(n =>
-          n._id === newNotif._id || (
-            n.patientName === newNotif.patientName &&
-            n.heureAppel === newNotif.heureAppel &&
-            n.localisation === newNotif.localisation
-          )
-        );
-        if (!alreadyExists) {
-          return [newNotif, ...prev];
+            setNotifications(prev => {
+              const alreadyExists = prev.some(n =>
+                n._id === newNotif._id || (
+                  n.patientName === newNotif.patientName &&
+                  n.heureAppel === newNotif.heureAppel &&
+                  n.localisation === newNotif.localisation
+                )
+              );
+              
+              if (!alreadyExists) {
+                return [newNotif, ...prev];
+              }
+              return prev;
+            });
+
+            if (audioEnabled && audioRef.current) {
+              audioRef.current.play().catch(err =>
+                console.warn("🔇 Erreur audio:", err)
+              );
+            }
+          }
+        } catch (err) {
+          console.error("Erreur parsing WebSocket:", err);
         }
-        return prev;
-      });
-
-      if (audioEnabled && audioRef.current) {
-        audioRef.current.play().catch(err =>
-          console.warn("🔇 Erreur audio:", err)
-        );
-      }
-    }
-  } catch (err) {
-    console.error("Erreur parsing WebSocket:", err);
-  }
-};
+      };
 
       ws.onclose = () => {
         console.log("🔌 WebSocket fermé, tentative de reconnexion...");
@@ -92,7 +93,7 @@ const  WebSocketNotifications = () => {
       };
     };
 
-    fetchInitial();
+    fetchInitialNotifications();
     connectWebSocket();
 
     return () => {
@@ -123,81 +124,184 @@ const  WebSocketNotifications = () => {
     }
   };
 
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   return (
-    <div style={styles.container} ref={notificationRef}>
+    <div ref={notificationRef} style={{ position: 'relative', display: 'inline-block' }}>
       <button 
-        onClick={() => setShowNotifications(!showNotifications)} 
-        style={styles.showButton}
+        onClick={() => setShowNotifications(!showNotifications)}
+        style={{
+          background: showNotifications ? '#f0f7ff' : 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '10px',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.3s ease',
+          position: 'relative',
+          ':hover': {
+            backgroundColor: '#f0f7ff'
+          }
+        }}
       >
-        <span>🔔</span>
-        Notifications
+        <Bell size={20} color={showNotifications ? '#1e88e5' : '#2c3e50'} />
         {notifications.length > 0 && (
-          <span style={styles.badge}>
+          <span style={{
+            position: 'absolute',
+            top: '5px',
+            right: '5px',
+            backgroundColor: '#f44336',
+            color: 'white',
+            borderRadius: '50%',
+            width: '18px',
+            height: '18px',
+            fontSize: '0.7rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
             {notifications.length > 9 ? '9+' : notifications.length}
           </span>
         )}
       </button>
 
       {showNotifications && (
-        <div style={styles.notificationPanel}>
-          <div style={styles.header}>
-            <h3 style={styles.title}>Notifications</h3>
-            <div style={styles.controls}>
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: '50px',
+          width: '350px',
+          maxHeight: '500px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          overflow: 'hidden',
+          border: '1px solid #e0e0e0',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            padding: '16px',
+            borderBottom: '1px solid #eee',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: '#f8fafc'
+          }}>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#1e293b' }}>
+              Notifications
+            </h3>
+            <div style={{ display: 'flex', gap: '12px' }}>
               <button 
                 onClick={() => setAudioEnabled(!audioEnabled)} 
-                style={styles.controlButton}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: audioEnabled ? '#1e88e5' : '#64748b',
+                  ':hover': {
+                    backgroundColor: '#f1f5f9'
+                  }
+                }}
+                title={audioEnabled ? 'Désactiver le son' : 'Activer le son'}
               >
-                {audioEnabled ? '🔊 Son' : '🔇 Muet'}
+                {audioEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
               </button>
               {notifications.length > 0 && (
                 <button 
-                  onClick={clearAllNotifications} 
-                  style={styles.controlButton}
+                  onClick={clearAllNotifications}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: '#64748b',
+                    ':hover': {
+                      backgroundColor: '#f1f5f9',
+                      color: '#ef4444'
+                    }
+                  }}
+                  title="Tout effacer"
                 >
-                  Tout effacer
+                  <Trash2 size={18} />
                 </button>
               )}
             </div>
           </div>
 
-          <div style={styles.listContainer}>
-            <ul style={styles.list}>
-              {notifications.length === 0 ? (
-                <div style={styles.emptyState}>
-                  Aucune notification pour le moment
-                </div>
-              ) : (
-                notifications.map((n, i) => (
-                  <li key={n._id || i} style={styles.item}>
-                    <div style={styles.itemHeader}>
-                      <span style={styles.userName}>{n.patientName || 'Utilisateur'}</span>
-                    </div>
-                    <div style={styles.messageContent}>
-                      <div style={styles.actionContainer}>
-                        <span style={styles.action}>
-                          {n.type === 'ALERTE_CRITIQUE' ? 'a déclenché une alerte' : 'a posté'}
-                        </span>
-                        <span style={styles.time}>
-                          {new Date(n.heureAppel).toLocaleTimeString('fr-FR', {
-                            hour: '2-digit', 
-                            minute: '2-digit'
-                          })}
-                        </span>
+          <div style={{ overflowY: 'auto', maxHeight: '400px' }}>
+            {notifications.length === 0 ? (
+              <div style={{
+                padding: '24px',
+                textAlign: 'center',
+                color: '#64748b',
+                fontSize: '14px'
+              }}>
+                Aucune notification pour le moment
+              </div>
+            ) : (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {notifications.map((notification, index) => (
+                  <li 
+                    key={notification._id || index}
+                    style={{
+                      padding: '12px 16px',
+                      borderBottom: '1px solid #f1f5f9',
+                      transition: 'background-color 0.2s',
+                      ':hover': {
+                        backgroundColor: '#f8fafc'
+                      }
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ fontWeight: 500, color: '#1e293b' }}>
+                        {notification.patientName || 'Patient'}
                       </div>
-                      <span style={styles.target}>{n.localisation || 'Upper Menu'}</span>
+                      <div style={{ fontSize: '12px', color: '#64748b' }}>
+                        {formatTime(notification.heureAppel)}
+                      </div>
+                    </div>
+                    <div style={{ marginTop: '4px', fontSize: '14px', color: '#475569' }}>
+                      Alerte critique
+                    </div>
+                    <div style={{ marginTop: '4px', fontSize: '13px', color: '#3b82f6' }}>
+                      {notification.localisation || 'Localisation inconnue'}
                     </div>
                     <button
-                      onClick={() => removeNotification(n._id, i)}
-                      style={styles.closeButton}
-                      title="Supprimer"
+                      onClick={() => removeNotification(notification._id, index)}
+                      style={{
+                        position: 'absolute',
+                        right: '16px',
+                        top: '12px',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: '#94a3b8',
+                        ':hover': {
+                          color: '#64748b'
+                        }
+                      }}
                     >
-                      ✕
+                      <X size={16} />
                     </button>
                   </li>
-                ))
-              )}
-            </ul>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       )}

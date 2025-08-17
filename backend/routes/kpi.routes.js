@@ -55,7 +55,6 @@ router.get('/urgences-par-zone', async (req, res) => {
   }
 });
 
-// Nouvelles routes
 
 // Nombre total & disponibles ambulances
 router.get('/ambulances-disponibles', async (req, res) => {

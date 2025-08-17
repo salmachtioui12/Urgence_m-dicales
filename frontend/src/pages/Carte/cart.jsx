@@ -422,7 +422,11 @@ function Cart() {
                   </span>
                   <br />
                   <span>
-                    <strong>🚑 Ambulance :</strong> {appel.ambulanceAffectee ?? "Aucune"}
+                <strong>🚑 Ambulance :</strong>{" "}
+{appel.ambulanceAffectee
+  ? `${appel.ambulanceAffectee.type} (ID: ${appel.ambulanceAffectee.id})`
+  : "Aucune"}
+
                   </span>
                   <br />
                   <span>

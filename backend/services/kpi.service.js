@@ -6,7 +6,7 @@ async function getTotalUrgencesTraitees() {
   const appelterminer= await Appel.countDocuments({ etat: 'terminée' }); 
    const appelenattend= await Appel.countDocuments({ etat: 'en attente' }); 
     const appeleninterv= await Appel.countDocuments({ etat: 'en intervention' }); 
-  return {appelterminer,appelenattend,appeleninterv}; // Assure-toi que ce champ existe bien
+  return {appelterminer,appelenattend,appeleninterv}; 
 }
 
 async function getTempsMoyenReponse() {

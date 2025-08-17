@@ -17,7 +17,7 @@ const AmbulancierSchema = new mongoose.Schema({
   email: String,
   adresse: String,
   matricule: String,
-  hopitalId: String,
+  hopitalId: { type: mongoose.Schema.Types.ObjectId, ref: "Hopital" },
   anneesExperience: Number,
   services: [String],
   permis: PermisSchema,

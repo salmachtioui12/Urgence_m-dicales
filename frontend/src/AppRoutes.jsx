@@ -8,7 +8,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 
 // Layouts
-import Layout from "./Layout"; // opérateur
+import Layout from "./components/Sidebar/Sidebar"; // opérateur
 import LayoutHopital from "./pages_hopital/components/LayoutHopital";
 import LayoutAmbulancier from "./pages_ambilancier/components/LayoutAmbilancier";
 
@@ -25,6 +25,7 @@ import ListeInterventions from "./pages/Interventions/ListeInterventions";
 import DemandesAmbulanciers from "./pages_hopital/pages/DemandesAmbulanciers";
 import NotificationsPage from "./components/WebSocketNotifications";
 import Listeusers from "./components/listeusers/listeusers";
+import AmbulanciersList from "./pages/Ambulanciers/AmbulanciersList";
 // 🏥 Pages Hopital
 import DashboardHopital from "./pages_hopital/pages/DashbordHopital";
 import ProfilHopital from "./pages_hopital/pages/ProfilHopital";
@@ -39,6 +40,7 @@ import HistoriqueInterventions from "./pages_ambilancier/pages/Historique_interv
 import NotificationsAmbulancier from "./pages_ambilancier/pages/NotificationsAmbulancier";
 import ProfilAmbulancier from "./pages_ambilancier/pages/ProfilAmbulancier";
 import ModifierProfilAmbulancier from "./pages_ambilancier/pages/ModifierProfilAmbulancier";
+
 
 // 🔐 Fonction rôle
 const getUserRole = () => {
@@ -101,6 +103,7 @@ export default function AppRoutes() {
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="demandes-ambulanciers" element={<DemandesAmbulanciers />} />
            <Route path="/statistiques" element={<Listeusers/>} />
+            <Route path="/ambulancier" element={<AmbulanciersList/>} />
         </Route>
       )}
 
