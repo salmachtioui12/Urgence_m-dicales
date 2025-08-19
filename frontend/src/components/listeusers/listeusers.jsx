@@ -1,5 +1,18 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from 'react-router-dom';
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
+} from "recharts";
+
 
 export default function UserManagement() {
   // États
@@ -11,13 +24,31 @@ export default function UserManagement() {
   const [showModal, setShowModal] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [dialogConfig, setDialogConfig] = useState({});
+  const navigate = useNavigate();
+  const [weeklyData, setWeeklyData] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 6;
+const [hopitauxData, setHopitauxData] = useState([]);
+
+  // Calcul des utilisateurs pour la page courante
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(users.length / usersPerPage);
 
   const token = localStorage.getItem("token");
+
+  const handleUnauthorized = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
 
   // Effets
   useEffect(() => {
     fetchUsers();
     fetchStats();
+    fetchWeeklyRegistrations();
+    fetchHopitauxAmbulanciers(); 
   }, []);
 
   // Fonctions
@@ -31,11 +62,25 @@ export default function UserManagement() {
       setError(null);
     } catch (err) {
       console.error(err);
-      setError("Erreur lors du chargement des utilisateurs");
+      if (err.response?.status === 403) {
+        handleUnauthorized();
+      } else {
+        setError('Erreur lors du chargement des données');
+      }
     } finally {
       setLoading(false);
     }
   };
+const fetchHopitauxAmbulanciers = async () => {
+  try {
+    const res = await axios.get("http://localhost:3000/users/users/hopitaux-ambulanciers", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setHopitauxData(res.data);
+  } catch (err) {
+    console.error("Erreur récupération hopitaux+ambulanciers:", err);
+  }
+};
 
   const fetchStats = async () => {
     try {
@@ -45,6 +90,17 @@ export default function UserManagement() {
       setStats(res.data);
     } catch (err) {
       console.error("Erreur récupération stats:", err);
+    }
+  };
+
+  const fetchWeeklyRegistrations = async () => {
+    try {
+      const res = await axios.get("http://localhost:3000/users/users/weekly-registrations", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setWeeklyData(res.data);
+    } catch (err) {
+      console.error("Erreur récupération weekly registrations:", err);
     }
   };
 
@@ -66,6 +122,10 @@ export default function UserManagement() {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUsers(users.filter(user => user._id !== id));
+        // Revenir à la première page si la dernière page devient vide
+        if (currentUsers.length === 1 && currentPage > 1) {
+          setCurrentPage(currentPage - 1);
+        }
       } catch (err) {
         console.error(err);
         setError("Erreur lors de la suppression");
@@ -100,13 +160,50 @@ export default function UserManagement() {
     },
     statsContainer: {
       margin: "20px 0",
-      padding: "15px",
-      backgroundColor: "#f8fafc",
-      borderRadius: "8px"
+      padding: "20px",
+      backgroundColor: "white",
+      borderRadius: "10px",
+      boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+      gap: "20px"
     },
-    statsTitle: {
-      margin: "0 0 10px 0",
+    statsCard: {
+      padding: "15px",
+      borderRadius: "8px",
+      backgroundColor: "#f8fafc",
+      textAlign: "center",
+      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)"
+    },
+    statsValue: {
+      fontSize: "28px",
+      fontWeight: "700",
+      margin: "10px 0",
       color: "#1e3a8a"
+    },
+    statsLabel: {
+      fontSize: "14px",
+      color: "#64748b",
+      textTransform: "uppercase",
+      letterSpacing: "1px"
+    },
+    statusItem: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: "8px 0",
+      borderBottom: "1px solid #e2e8f0",
+      ":last-child": {
+        borderBottom: "none"
+      }
+    },
+    statusLabel: {
+      color: "#475569",
+      fontSize: "14px"
+    },
+    statusValue: {
+      fontWeight: "600",
+      color: "#334155"
     },
     noUsers: {
       textAlign: "center",
@@ -209,53 +306,6 @@ export default function UserManagement() {
       left: "50%",
       transform: "translate(-50%, -50%)"
     },
-    statsContainer: {
-  margin: "20px 0",
-  padding: "20px",
-  backgroundColor: "white",
-  borderRadius: "10px",
-  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-  gap: "20px"
-},
-statsCard: {
-  padding: "15px",
-  borderRadius: "8px",
-  backgroundColor: "#f8fafc",
-  textAlign: "center",
-  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)"
-},
-statsValue: {
-  fontSize: "28px",
-  fontWeight: "700",
-  margin: "10px 0",
-  color: "#1e3a8a"
-},
-statsLabel: {
-  fontSize: "14px",
-  color: "#64748b",
-  textTransform: "uppercase",
-  letterSpacing: "1px"
-},
-statusItem: {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "8px 0",
-  borderBottom: "1px solid #e2e8f0",
-  ":last-child": {
-    borderBottom: "none"
-  }
-},
-statusLabel: {
-  color: "#475569",
-  fontSize: "14px"
-},
-statusValue: {
-  fontWeight: "600",
-  color: "#334155"
-},
     errorMessage: {
       padding: "15px",
       margin: "20px",
@@ -372,14 +422,14 @@ statusValue: {
       boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
     },
     confirmDialogMessage: {
-      marginBottom: "20px", 
-      fontSize: "16px", 
-      color: "#333", 
+      marginBottom: "20px",
+      fontSize: "16px",
+      color: "#333",
       textAlign: "center"
     },
     confirmDialogButtons: {
-      display: "flex", 
-      justifyContent: "center", 
+      display: "flex",
+      justifyContent: "center",
       gap: "15px"
     },
     confirmDialogButton: {
@@ -397,6 +447,39 @@ statusValue: {
     confirmDialogConfirmButton: {
       backgroundColor: "#e74c3c",
       color: "white",
+    },
+    // Nouveaux styles pour la pagination
+    paginationContainer: {
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: "30px",
+      gap: "10px"
+    },
+    paginationButton: {
+      padding: "8px 16px",
+      border: "1px solid #e2e8f0",
+      backgroundColor: "white",
+      color: "#3b82f6",
+      borderRadius: "4px",
+      cursor: "pointer",
+      fontWeight: "500",
+      transition: "all 0.2s",
+      ":hover": {
+        backgroundColor: "#f1f5f9"
+      },
+      ":disabled": {
+        color: "#cbd5e1",
+        cursor: "not-allowed",
+        backgroundColor: "white"
+      }
+    },
+    activePaginationButton: {
+      backgroundColor: "#3b82f6",
+      color: "white",
+      ":hover": {
+        backgroundColor: "#2563eb"
+      }
     }
   };
 
@@ -460,99 +543,183 @@ statusValue: {
       </div>
 
       {/* Statistiques */}
-    
-{stats && (
-  <div style={styles.statsContainer}>
-    <div style={styles.statsCard}>
-      <div style={styles.statsLabel}>Total Utilisateurs</div>
-      <div style={styles.statsValue}>{stats.totalUsers}</div>
-    </div>
-    <div style={styles.statsCard}>
-      <div style={styles.statsLabel}>Hôpitaux</div>
-      <div style={styles.statsValue}>{stats.totalHopitaux}</div>
-    </div>
-    <div style={styles.statsCard}>
-      <div style={styles.statsLabel}>Ambulanciers</div>
-      <div style={styles.statsValue}>{stats.totalAmbulanciers}</div>
-    </div>
-    <div style={{ ...styles.statsCard, gridColumn: "1 / -1" }}>
-      <div style={styles.statsLabel}>Statuts</div>
-      <div style={{ marginTop: "15px" }}>
-        <div style={styles.statusItem}>
-          <span style={styles.statusLabel}>En attente</span>
-          <span style={styles.statusValue}>{stats.statusCounts.en_attente}</span>
+      {stats && (
+        <div style={styles.statsContainer}>
+          <div style={styles.statsCard}>
+            <div style={styles.statsLabel}>Total Utilisateurs</div>
+            <div style={styles.statsValue}>{stats.totalUsers}</div>
+          </div>
+          <div style={styles.statsCard}>
+            <div style={styles.statsLabel}>Hôpitaux</div>
+            <div style={styles.statsValue}>{stats.totalHopitaux}</div>
+          </div>
+          <div style={styles.statsCard}>
+            <div style={styles.statsLabel}>Ambulanciers</div>
+            <div style={styles.statsValue}>{stats.totalAmbulanciers}</div>
+          </div>
+          <div style={{ ...styles.statsCard, gridColumn: "1 / -1" }}>
+            <div style={styles.statsLabel}>Statuts</div>
+            <div style={{ marginTop: "15px" }}>
+              <div style={styles.statusItem}>
+                <span style={styles.statusLabel}>En attente</span>
+                <span style={styles.statusValue}>{stats.statusCounts.en_attente}</span>
+              </div>
+              <div style={styles.statusItem}>
+                <span style={styles.statusLabel}>Approuvé</span>
+                <span style={styles.statusValue}>{stats.statusCounts.approuve}</span>
+              </div>
+              <div style={styles.statusItem}>
+                <span style={styles.statusLabel}>Rejeté</span>
+                <span style={styles.statusValue}>{stats.statusCounts.rejete}</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div style={styles.statusItem}>
-          <span style={styles.statusLabel}>Approuvé</span>
-          <span style={styles.statusValue}>{stats.statusCounts.approuve}</span>
+      )}
+
+      {/* Graphique des créations de comptes */}
+      {weeklyData.length > 0 && (
+        <div style={{
+          marginTop: "30px",
+          padding: "20px",
+          backgroundColor: "white",
+          borderRadius: "10px",
+          boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
+        }}>
+          <h3 style={{ marginBottom: "15px", fontSize: "18px", fontWeight: "600", color: "#1e3a8a" }}>
+            Créations de comptes cette semaine
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={weeklyData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="day" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={3} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
-        <div style={styles.statusItem}>
-          <span style={styles.statusLabel}>Rejeté</span>
-          <span style={styles.statusValue}>{stats.statusCounts.rejete}</span>
-        </div>
-      </div>
-    </div>
+      )}
+{/* Nombre d’ambulanciers par hôpital */}
+{/* Nombre d’ambulanciers par hôpital (Diagramme) */}
+{hopitauxData.length > 0 && (
+  <div style={{
+    marginTop: "30px",
+    padding: "20px",
+    backgroundColor: "white",
+    borderRadius: "10px",
+    boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
+  }}>
+    <h3 style={{ marginBottom: "15px", fontSize: "18px", fontWeight: "600", color: "#1e3a8a" }}>
+      Ambulanciers par hôpital
+    </h3>
+    <ResponsiveContainer width="100%" height={350}>
+      <BarChart data={hopitauxData}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="nom" />
+        <YAxis />
+        <Tooltip />
+        <Bar dataKey="ambulanciersCount" fill="#3b82f6" barSize={50} />
+      </BarChart>
+    </ResponsiveContainer>
   </div>
 )}
 
+
       {/* Liste des utilisateurs sous forme de cartes */}
-      {users.length === 0 ? (
+      {currentUsers.length === 0 ? (
         <div style={styles.noUsers}>
-          <p>Aucun utilisateur enregistré.</p>
+          <p>Aucun utilisateur sur cette page.</p>
         </div>
       ) : (
-        <div style={styles.cardContainer}>
-          {users.map((user) => (
-            <div key={user._id} style={styles.card}>
-              <div style={styles.cardHeader}>
-                <h3 style={styles.cardTitle}>{user.nom}</h3>
-              </div>
-              <div style={styles.cardBody}>
-                <div style={styles.cardField}>
-                  <span style={styles.cardLabel}>Email:</span>
-                  <span style={styles.cardValue}>{user.email}</span>
+        <>
+          <div style={styles.cardContainer}>
+            {currentUsers.map((user) => (
+              <div key={user._id} style={styles.card}>
+                <div style={styles.cardHeader}>
+                  <h3 style={styles.cardTitle}>{user.nom}</h3>
                 </div>
-                <div style={styles.cardField}>
-                  <span style={styles.cardLabel}>Rôle:</span>
-                  <span style={styles.cardValue}>
-                    <span style={{
-                      ...styles.badge,
-                      ...(user.role === 'admin' ? styles.adminRole : 
-                          user.role === 'hopital' ? styles.hopitalRole : styles.ambulancierRole)
-                    }}>
-                      {user.role}
+                <div style={styles.cardBody}>
+                  <div style={styles.cardField}>
+                    <span style={styles.cardLabel}>Email:</span>
+                    <span style={styles.cardValue}>{user.email}</span>
+                  </div>
+                  <div style={styles.cardField}>
+                    <span style={styles.cardLabel}>Rôle:</span>
+                    <span style={styles.cardValue}>
+                      <span style={{
+                        ...styles.badge,
+                        ...(user.role === 'admin' ? styles.adminRole : 
+                            user.role === 'hopital' ? styles.hopitalRole : styles.ambulancierRole)
+                      }}>
+                        {user.role}
+                      </span>
                     </span>
-                  </span>
-                </div>
-                <div style={styles.cardField}>
-                  <span style={styles.cardLabel}>Statut:</span>
-                  <span style={styles.cardValue}>
-                    <span style={{
-                      ...styles.badge,
-                      ...(user.status === 'actif' ? styles.activeStatus : styles.inactiveStatus)
-                    }}>
-                      {user.status}
+                  </div>
+                  <div style={styles.cardField}>
+                    <span style={styles.cardLabel}>Statut:</span>
+                    <span style={styles.cardValue}>
+                      <span style={{
+                        ...styles.badge,
+                        ...(user.status === 'actif' ? styles.activeStatus : styles.inactiveStatus)
+                      }}>
+                        {user.status}
+                      </span>
                     </span>
-                  </span>
+                  </div>
+                </div>
+                <div style={styles.cardFooter}>
+                  <button 
+                    style={{ ...styles.button, ...styles.detailButton }}
+                    onClick={() => handleShowDetails(user)}
+                  >
+                    Détails
+                  </button>
+                  <button 
+                    style={{ ...styles.button, ...styles.deleteButton }}
+                    onClick={() => handleDelete(user._id)}
+                  >
+                    Supprimer
+                  </button>
                 </div>
               </div>
-              <div style={styles.cardFooter}>
-                <button 
-                  style={{ ...styles.button, ...styles.detailButton }}
-                  onClick={() => handleShowDetails(user)}
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {users.length > usersPerPage && (
+            <div style={styles.paginationContainer}>
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                style={styles.paginationButton}
+              >
+                Précédent
+              </button>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                <button
+                  key={number}
+                  onClick={() => setCurrentPage(number)}
+                  style={{
+                    ...styles.paginationButton,
+                    ...(number === currentPage ? styles.activePaginationButton : {})
+                  }}
                 >
-                  Détails
+                  {number}
                 </button>
-                <button 
-                  style={{ ...styles.button, ...styles.deleteButton }}
-                  onClick={() => handleDelete(user._id)}
-                >
-                  Supprimer
-                </button>
-              </div>
+              ))}
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                style={styles.paginationButton}
+              >
+                Suivant
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {/* Modal de détails */}
@@ -573,7 +740,6 @@ statusValue: {
               </button>
             </div>
             
-            {/* Informations de base */}
             <div style={styles.detailRow}>
               <div style={styles.detailLabel}>Nom:</div>
               <div style={styles.detailValue}>{selectedUser.nom}</div>
@@ -609,7 +775,6 @@ statusValue: {
               </div>
             </div>
 
-            {/* Informations spécifiques au rôle */}
             {selectedUser.role === "hopital" && (
               <>
                 <h4 style={{ margin: "15px 0 10px 0", color: "#1e3a8a" }}>Informations Hôpital</h4>

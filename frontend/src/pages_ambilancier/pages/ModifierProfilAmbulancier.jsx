@@ -33,6 +33,11 @@ export default function ModifierProfilAmbulancier() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
   let email = null;
+    const [error, setError] = useState("");
+const handleUnauthorized = () => {
+  localStorage.removeItem('token'); // On supprime le token
+  navigate('/login');              // Redirection vers la page login
+};
 
   if (token) {
     try {
@@ -53,6 +58,11 @@ export default function ModifierProfilAmbulancier() {
         setLoading(false);
       } catch (error) {
         console.error("Erreur lors du chargement du profil :", error);
+          if (error.response?.status === 403) {
+    handleUnauthorized();
+  } else {
+    setError('Erreur lors du chargement des données');
+  }
         setLoading(false);
         setMessage({ text: "Erreur lors du chargement du profil.", type: "error" });
       }
@@ -119,6 +129,7 @@ export default function ModifierProfilAmbulancier() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage({ text: "Profil mis à jour avec succès !", type: "success" });
+      
       setTimeout(() => navigate("/ambulancier/profil"), 1500);
     } catch (error) {
       console.error("Erreur lors de la mise à jour :", error);

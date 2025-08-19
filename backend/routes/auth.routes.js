@@ -196,6 +196,7 @@ router.patch('/valider/ambulancier/:id', verifyToken, async (req, res) => {
     const newAmbulancier = new Ambulancier({
       ...user.details, // merge avec les détails
       email: user.email,
+      nom:user.nom,
       userId: user._id,
       hopitalId: hopital._id, // ✅ ajoute l'id ObjectId de l'hôpital
       emailHopital: hopital.contact?.email || "",

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import CustomNotification from '../../components/Notification/Notification';
+import { useNavigate } from 'react-router-dom';
 
 const Affectation = () => {
   const [ressources, setRessources] = useState({
@@ -15,39 +16,43 @@ const Affectation = () => {
   const [success, setSuccess] = useState(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [dialogConfig, setDialogConfig] = useState({});
+const navigate = useNavigate();
 
   const token = localStorage.getItem('token');
 
   useEffect(() => {
     if (!token) return;
 
-    const fetchRessources = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/affectations/ressources', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setRessources(response.data);
+        const [ressourcesRes, affectationsRes] = await Promise.all([
+          axios.get('http://localhost:3000/api/affectations/ressources', {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get('http://localhost:3000/api/affectations', {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+
+        setRessources(ressourcesRes.data);
+        setAffectations(affectationsRes.data.filter(aff => aff.ambulancierId && aff.ambulanceId));
         setLoading(false);
       } catch (err) {
-        setError('Erreur lors du chargement des ressources');
+       if (err.response?.status === 403) {
+    handleUnauthorized();
+  } else {
+    setError('Erreur lors du chargement des données');
+  }
         setLoading(false);
       }
     };
 
-    const fetchAffectations = async () => {
-      try {
-        const response = await axios.get('http://localhost:3000/api/affectations', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setAffectations(response.data);
-      } catch (err) {
-        console.error('Erreur affectations:', err);
-      }
-    };
-
-    fetchRessources();
-    fetchAffectations();
+    fetchData();
   }, [token]);
+const handleUnauthorized = () => {
+  localStorage.removeItem('token'); // On supprime le token
+  navigate('/login');              // Redirection vers la page login
+};
 
   const showConfirm = (message, onConfirm) => {
     setDialogConfig({
@@ -67,37 +72,34 @@ const Affectation = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:3000/api/affectations', {
-        ambulancierId: selectedAmbulancier,
-        ambulanceId: selectedAmbulance
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.post(
+        'http://localhost:3000/api/affectations',
+        {
+          ambulancierId: selectedAmbulancier,
+          ambulanceId: selectedAmbulance
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
 
       setSuccess('Affectation créée avec succès');
       setError(null);
 
-      // Mettre à jour les ressources
       setRessources(prev => ({
-        ...prev,
         ambulanciers: prev.ambulanciers.map(a =>
-          a._id === selectedAmbulancier ? { ...a, statut: 'en-mission' } : a
+          a._id === selectedAmbulancier ? { ...a, statut: 'en mission' } : a
         ),
         ambulances: prev.ambulances.map(a =>
-          a._id === selectedAmbulance ? { ...a, etat: 'en-mission' } : a
+          a._id === selectedAmbulance ? { ...a, etat: 'en mission' } : a
         )
       }));
 
-      // Ajouter la nouvelle affectation à l'état local
       setAffectations(prev => [response.data, ...prev]);
-
       setSelectedAmbulancier(null);
       setSelectedAmbulance(null);
-
     } catch (err) {
-      const errorMsg = err.response?.data?.error ||
-        'Erreur lors de la création de l\'affectation';
-      setError(errorMsg);
+      setError(err.response?.data?.error || 'Erreur lors de la création de l\'affectation');
       setSuccess(null);
     }
   };
@@ -111,18 +113,14 @@ const Affectation = () => {
 
         setSuccess('Historique effacé avec succès');
         setError(null);
-        
         setAffectations([]);
-        
+
         const response = await axios.get('http://localhost:3000/api/affectations/ressources', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setRessources(response.data);
-
       } catch (err) {
-        const errorMsg = err.response?.data?.error ||
-          'Erreur lors de la suppression de l\'historique';
-        setError(errorMsg);
+        setError(err.response?.data?.error || 'Erreur lors de la suppression de l\'historique');
         setSuccess(null);
       }
     });
@@ -130,14 +128,15 @@ const Affectation = () => {
 
   const handleTerminerAffectation = async (affectationId) => {
     try {
-      await axios.patch(`http://localhost:3000/api/affectations/${affectationId}/terminer`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.patch(
+        `http://localhost:3000/api/affectations/${affectationId}/terminer`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       setSuccess('Affectation terminée avec succès');
       setError(null);
-      
-      // Recharger les données
+
       const [ressourcesRes, affectationsRes] = await Promise.all([
         axios.get('http://localhost:3000/api/affectations/ressources', {
           headers: { Authorization: `Bearer ${token}` }
@@ -146,14 +145,11 @@ const Affectation = () => {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
-      
-      setRessources(ressourcesRes.data);
-      setAffectations(affectationsRes.data);
 
+      setRessources(ressourcesRes.data);
+      setAffectations(affectationsRes.data.filter(aff => aff.ambulancierId && aff.ambulanceId));
     } catch (err) {
-      const errorMsg = err.response?.data?.error ||
-        'Erreur lors de la terminaison de l\'affectation';
-      setError(errorMsg);
+      setError(err.response?.data?.error || 'Erreur lors de la terminaison de l\'affectation');
       setSuccess(null);
     }
   };
@@ -486,38 +482,58 @@ const Affectation = () => {
 
   return (
     <div style={styles.container}>
-     
-<div style={styles.header}>
+      <div style={styles.header}>
         <h2 style={styles.headerTitle}>Gestion des Affectations</h2>
       </div>
 
-      {/* Boîte de dialogue de confirmation */}
       {showConfirmDialog && (
-        <div style={styles.confirmDialog}>
-          <div style={styles.confirmDialogContent}>
-            <div style={styles.confirmDialogMessage}>
-              {dialogConfig.message}
-            </div>
-            <div style={styles.confirmDialogButtons}>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            maxWidth: '400px',
+            width: '90%'
+          }}>
+            <p style={{ marginBottom: '20px' }}>{dialogConfig.message}</p>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '10px'
+            }}>
               <button
                 onClick={() => setShowConfirmDialog(false)}
                 style={{
-                  ...styles.confirmDialogButton,
-                  ...styles.confirmDialogCancelButton
+                  padding: '8px 16px',
+                  backgroundColor: '#e0e0e0',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
                 }}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#bdc3c7")}
-                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#ecf0f1")}
               >
                 Annuler
               </button>
               <button
                 onClick={dialogConfig.onConfirm}
                 style={{
-                  ...styles.confirmDialogButton,
-                  ...styles.confirmDialogConfirmButton
+                  padding: '8px 16px',
+                  backgroundColor: '#ff4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
                 }}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#c0392b")}
-                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#e74c3c")}
               >
                 Confirmer
               </button>
@@ -526,7 +542,6 @@ const Affectation = () => {
         </div>
       )}
 
-      {/* Remplacez les alertes par le composant Notification */}
       {error && (
         <CustomNotification 
           type="error"
@@ -534,6 +549,7 @@ const Affectation = () => {
           onClose={() => setError(null)}
         />
       )}
+
       {success && (
         <CustomNotification 
           type="success"
@@ -604,7 +620,7 @@ const Affectation = () => {
                   <svg style={{ width: '18px', height: '18px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                  {amb.nom} {amb.prenom}
+                  {amb?.nom || 'N/A'} {amb?.prenom || 'N/A'}
                 </h3>
                 <p style={styles.itemText}><strong>Matricule:</strong> {amb.matricule}</p>
                 <p style={styles.itemText}><strong>Téléphone:</strong> {amb.telephone}</p>
@@ -637,9 +653,9 @@ const Affectation = () => {
                 {amb.destination && <p style={styles.itemText}><strong>Destination:</strong> {amb.destination}</p>}
                 <span style={{
                   ...styles.statusBadge,
-                  ...(amb.etat === 'en-mission' ? styles.onMission : styles.available)
+                  ...(amb.etat === 'en mission' ? styles.onMission : styles.available)
                 }}>
-                  {amb.etat === 'en-mission' ? 'En mission' : 'Disponible'}
+                  {amb.etat === 'en mission' ? 'En mission' : 'Disponible'}
                 </span>
               </div>
             ))}

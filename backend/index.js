@@ -7,7 +7,7 @@ const { verifierEtNotifierCritiquesNonAffectes } = require('./services/notificat
 const { getAllStats } = require('./services/stats.service');
 const { notifierStatistiques, notifierDerniersAppels, initWebSocket } = require('./websocket');
 const { getDerniersAppels } = require('./services/appels.service');
-
+const statsRoutes = require("./routes/stats.route");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
@@ -43,6 +43,7 @@ app.use('/api/ambulanciers', ambulancierRoutes);
 // Simulation
 const { startAutoGeneration } = require('./services/appels.service');
 const { simulerDeplacement } = require('./services/agents.service');
+app.use("/stats", statsRoutes);
 // startAutoGeneration();
 setInterval(simulerDeplacement, 5000);
 

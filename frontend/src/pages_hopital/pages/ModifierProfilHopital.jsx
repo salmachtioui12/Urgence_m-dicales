@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "./ModiferProfilHopital.css"
+
+
+
 export default function ModifierProfilHopital() {
   const [profil, setProfil] = useState({
     nom: "",
@@ -37,6 +40,7 @@ export default function ModifierProfilHopital() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+ 
   let email = null;
 
   if (token) {
@@ -47,6 +51,10 @@ export default function ModifierProfilHopital() {
       email = null;
     }
   }
+const handleUnauthorized = () => {
+  localStorage.removeItem('token'); // On supprime le token
+  navigate('/login');              // Redirection vers la page login
+};
 
   useEffect(() => {
     const fetchProfil = async () => {
@@ -56,11 +64,16 @@ export default function ModifierProfilHopital() {
         });
         setProfil(res.data);
         setLoading(false);
-      } catch (error) {
-        console.error("Erreur lors du chargement du profil :", error);
-        setLoading(false);
-        setMessage({ text: "Erreur lors du chargement du profil.", type: "error" });
       }
+       catch (error) {
+  if (error.response?.status === 403) {
+    handleUnauthorized();
+  } else {
+    setMessage({ text: "Erreur lors du chargement des données.", type: "error" });
+  }
+  setLoading(false);
+}
+
     };
     
     if (email) {

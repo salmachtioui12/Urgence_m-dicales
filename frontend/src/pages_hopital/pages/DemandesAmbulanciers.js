@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from 'react-router-dom';
 
 function DemandesAmbulanciers() {
   const [demandes, setDemandes] = useState([]);
@@ -7,6 +8,12 @@ function DemandesAmbulanciers() {
 
   const user = JSON.parse(localStorage.getItem("user"));
   const token = localStorage.getItem("token");
+  const navigate = useNavigate();
+
+const handleUnauthorized = () => {
+  localStorage.removeItem('token'); // On supprime le token
+  navigate('/login');              // Redirection vers la page login
+};
 
   useEffect(() => {
     if (user?.role === "hopital" && token) {
@@ -23,7 +30,11 @@ function DemandesAmbulanciers() {
         })
         .catch((err) => {
           console.error(err);
-          setError("Erreur lors du chargement des demandes.");
+        if (err.response?.status === 403) {
+    handleUnauthorized();
+  } else {
+  setError("Impossible de charger les ambulanciers.");
+  }
         });
     }
   }, [user, token]);

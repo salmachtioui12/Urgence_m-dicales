@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./AmbulanciersList.css";
+import { useNavigate } from 'react-router-dom';
+
 
 export default function AmbulanciersList() {
   const [ambulanciers, setAmbulanciers] = useState([]);
@@ -13,6 +15,8 @@ export default function AmbulanciersList() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [dialogConfig, setDialogConfig] = useState({});
   const [activeTab, setActiveTab] = useState("info");
+  const navigate = useNavigate();
+
   // États pour les filtres
   const [filters, setFilters] = useState({
     nom: '',
@@ -20,7 +24,11 @@ export default function AmbulanciersList() {
     experienceMin: '',
     statut: ''
   });
-  
+  const handleUnauthorized = () => {
+  localStorage.removeItem('token'); // On supprime le token
+  navigate('/login');              // Redirection vers la page login
+};
+
   // États pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
@@ -42,6 +50,11 @@ export default function AmbulanciersList() {
       } catch (err) {
         console.error("Erreur lors de la récupération des ambulanciers:", err);
         setError(err.response?.data?.message || "Erreur de chargement des ambulanciers");
+         if (err.response?.status === 403) {
+    handleUnauthorized();
+  } else {
+    setError('Erreur lors du chargement des données');
+  }
         setLoading(false);
       }
     };

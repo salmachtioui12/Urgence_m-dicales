@@ -3,10 +3,12 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "./ProfilHopital.css";
 
+
 export default function ProfilHopital() {
   const [hopital, setHopital] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
 
   const token = localStorage.getItem("token");
   let email = null;
@@ -20,6 +22,10 @@ export default function ProfilHopital() {
       email = null;
     }
   }
+const handleUnauthorized = () => {
+  localStorage.removeItem('token'); // On supprime le token
+  navigate('/login');              // Redirection vers la page login
+};
 
   useEffect(() => {
     const fetchProfil = async () => {
@@ -30,7 +36,11 @@ export default function ProfilHopital() {
         setHopital(response.data);
       } catch (err) {
         console.error(err);
-        setError("Erreur lors du chargement du profil.");
+      if (err.response?.status === 403) {
+    handleUnauthorized();
+  } else {
+    setError('Erreur lors du chargement des données');
+  }
       } finally {
         setLoading(false);
       }

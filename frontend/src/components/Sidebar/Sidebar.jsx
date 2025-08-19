@@ -13,6 +13,7 @@ import {
   Bell,
   ChevronDown,
   ChevronUp,
+  Package // Nouvelle icône pour Ressources
 } from "lucide-react";
 import WebSocketNotifications from "../WebSocketNotifications";
 
@@ -155,7 +156,7 @@ export default function LayoutDashboard() {
             </li>
           ))}
 
-          {/* Menu Ambulances avec sous-menu flottant */}
+          {/* Menu Ressources avec sous-menu flottant */}
           <li style={{ position: "relative" }}>
             <button
               onClick={() => setAmbulancesOpen(!ambulancesOpen)}
@@ -166,10 +167,10 @@ export default function LayoutDashboard() {
                 cursor: "pointer",
               }}
             >
-              <Ambulance size={20} />
+              <Package size={20} /> {/* Icône changée de Ambulance à Package */}
               {!isMobile && (
                 <>
-                  Ambulances
+                  Ressources
                   {ambulancesOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </>
               )}

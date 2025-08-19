@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
-
+import { useNavigate } from 'react-router-dom';
 const WS_URL = "ws://localhost:3000";
+
 
 export default function DashboardAmbulancier() {
   const [interventions, setInterventions] = useState([]);
@@ -10,10 +11,15 @@ export default function DashboardAmbulancier() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+const navigate = useNavigate();
 
   const socketRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const backoffRef = useRef(500);
+const handleUnauthorized = () => {
+  localStorage.removeItem('token'); // On supprime le token
+  navigate('/login');              // Redirection vers la page login
+};
 
   // Styles
   const styles = {
@@ -197,7 +203,11 @@ export default function DashboardAmbulancier() {
         setInterventions(enCours);
       } catch (err) {
         console.error("❌ Erreur API:", err);
-        setError("Erreur lors du chargement des interventions");
+         if (err.response?.status === 403) {
+    handleUnauthorized();
+  } else {
+    setError('Erreur lors du chargement des données');
+  }
       } finally {
         setLoading(false);
       }

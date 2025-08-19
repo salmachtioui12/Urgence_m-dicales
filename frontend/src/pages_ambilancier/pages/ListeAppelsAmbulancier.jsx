@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import "leaflet-routing-machine";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
+import { useNavigate } from 'react-router-dom';
 
 // Fix leaflet marker icons
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -174,6 +175,7 @@ export default function MesInterventions() {
   const [distance, setDistance] = useState(null);
   const [duration, setDuration] = useState(null);
   const [calculatingRoute, setCalculatingRoute] = useState(false);
+const navigate = useNavigate();
 
   // Configure leaflet icons
   useEffect(() => {
@@ -275,6 +277,10 @@ export default function MesInterventions() {
     const url = `https://www.waze.com/ul?ll=${end.lat},${end.lng}&navigate=yes`;
     window.open(url, "_blank");
   };
+const handleUnauthorized = () => {
+  localStorage.removeItem('token'); // On supprime le token
+  navigate('/login');              // Redirection vers la page login
+};
 
   useEffect(() => {
     const fetchInterventions = async () => {
@@ -294,7 +300,11 @@ export default function MesInterventions() {
         setInterventions(res.data.filter(iv => iv.statut === "en cours"));
       } catch (err) {
         console.error("Fetch error:", err);
-        setError("Erreur lors du chargement des interventions");
+        if (err.response?.status === 403) {
+    handleUnauthorized();
+  } else {
+    setError('Erreur lors du chargement des données');
+  }
       } finally {
         setLoading(false);
       }

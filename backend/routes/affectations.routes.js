@@ -81,19 +81,34 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 // ✅ GET toutes les affectations de l’hôpital connecté
+// ✅ GET toutes les affectations de l’hôpital connecté
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const hopitalId = req.userId;
+    const userId = req.user.id;
 
-    const affectations = await Affectation.find({ hopital: hopitalId })
-      .populate('ambulancierId', 'nom prenom telephone') // On récupère les infos utiles de l'ambulancier
-      .populate('ambulanceId', 'matricule type etat');   // Infos utiles de l'ambulance
+    // 1. Récupérer l'hôpital lié à ce user
+    const hopital = await Hopital.findOne({ userId });
+    if (!hopital) {
+      return res.status(404).json({ error: 'Hôpital introuvable' });
+    }
+
+    // 2. Récupérer toutes les ambulances de cet hôpital
+    const ambulances = await Ambulance.find({ hopitalId: hopital._id });
+    const ambulanceIds = ambulances.map(a => a._id);
+
+    // 3. Récupérer les affectations liées à ces ambulances
+    const affectations = await Affectation.find({ ambulanceId: { $in: ambulanceIds } })
+      .populate('ambulancierId', 'nom prenom telephone statut')
+      .populate('ambulanceId', 'id type etat statut');
 
     res.json(affectations);
   } catch (error) {
+    console.error("Erreur GET affectations:", error);
     res.status(500).json({ error: 'Erreur lors de la récupération des affectations' });
   }
 });
+
+
 // DELETE toutes les affectations d’un hôpital
 router.delete('/clear', verifyToken, async (req, res) => {
   try {

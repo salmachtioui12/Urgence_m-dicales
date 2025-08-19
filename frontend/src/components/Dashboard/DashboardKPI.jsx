@@ -233,10 +233,21 @@ const appelsParMinuteOptions = {
           <p>En intervention : <span className="stat-value">{displayedStats?.urgences?.appeleninterv}</span></p>
         </div>
 
-        <div className="stat-card">
-          <h2>Temps moyen</h2>
-          <p><span className="stat-value">{displayedStats?.tempsReponse}</span> minutes</p>
-        </div>
+<div className="stat-card compact-time">
+  <h2>Temps moyen</h2>
+  <div className="time-stats">
+    <div className="time-value">
+      <span className="stat-value large">{displayedStats?.tempsReponse?.moyenneMinutes ?? 0}</span>
+      <span className="time-label">minutes</span>
+    </div>
+    <div className="time-divider">≈</div>
+    <div className="time-value">
+      <span className="stat-value">{displayedStats?.tempsReponse?.moyenneHeures ?? 0}</span>
+      <span className="time-label">heures</span>
+    </div>
+  </div>
+</div>
+
 
         <div className="stat-card">
           <h2>Occupation</h2>

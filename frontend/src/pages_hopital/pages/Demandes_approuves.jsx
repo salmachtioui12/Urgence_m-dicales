@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from 'react-router-dom';
 
 export default function ListeAmbulanciers() {
   const [ambulanciers, setAmbulanciers] = useState([]);
@@ -9,6 +10,11 @@ export default function ListeAmbulanciers() {
   const [showModal, setShowModal] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [dialogConfig, setDialogConfig] = useState({});
+const navigate = useNavigate();
+const handleUnauthorized = () => {
+  localStorage.removeItem('token'); // On supprime le token
+  navigate('/login');              // Redirection vers la page login
+};
 
   useEffect(() => {
     const fetchAmbulanciers = async () => {
@@ -24,7 +30,12 @@ export default function ListeAmbulanciers() {
         setLoading(false);
       } catch (error) {
         console.error("Erreur lors de la récupération des ambulanciers :", error);
-        setErreur("Impossible de charger les ambulanciers.");
+          if (error.response?.status === 403) {
+    handleUnauthorized();
+  } else {
+setErreur("Impossible de charger les ambulanciers.");
+  }
+        
         setLoading(false);
       }
     };

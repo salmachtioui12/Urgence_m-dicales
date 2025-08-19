@@ -8,10 +8,9 @@ export default function ListeHopitaux() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [dialogConfig, setDialogConfig] = useState({
-    message: "",
-    onConfirm: () => {}
-  });
+  const [dialogConfig, setDialogConfig] = useState({ message: "", onConfirm: () => {} });
+  const [statistiques, setStatistiques] = useState(null);
+  const [statistiquesHopitalId, setStatistiquesHopitalId] = useState(null);
 
   const fetchHopitaux = async () => {
     try {
@@ -23,25 +22,30 @@ export default function ListeHopitaux() {
     }
   };
 
+  const fetchStatistiques = async (hopitalId) => {
+    try {
+      const res = await fetch(`http://localhost:3000/stats/hopital/${hopitalId}`);
+      const data = await res.json();
+      setStatistiques(data);
+      setStatistiquesHopitalId(hopitalId);
+    } catch (err) {
+      showAlert("Erreur lors du chargement des statistiques: " + err.message);
+    }
+  };
+
   useEffect(() => {
     fetchHopitaux();
   }, []);
 
   const showAlert = (message) => {
-    setDialogConfig({
-      message,
-      onConfirm: () => setShowConfirmDialog(false)
-    });
+    setDialogConfig({ message, onConfirm: () => setShowConfirmDialog(false) });
     setShowConfirmDialog(true);
   };
 
   const showConfirm = (message, onConfirm) => {
     setDialogConfig({
       message,
-      onConfirm: () => {
-        onConfirm();
-        setShowConfirmDialog(false);
-      }
+      onConfirm: () => { onConfirm(); setShowConfirmDialog(false); }
     });
     setShowConfirmDialog(true);
   };
@@ -50,7 +54,6 @@ export default function ListeHopitaux() {
     !filtreNom || (h.nom && h.nom.toLowerCase().includes(filtreNom.toLowerCase()))
   );
 
-  // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = hopitauxFiltres.slice(indexOfFirstItem, indexOfLastItem);
@@ -60,14 +63,13 @@ export default function ListeHopitaux() {
 
   function toggleDetails(id) {
     setExpandedHopitalId(expandedHopitalId === id ? null : id);
+    if (expandedHopitalId !== id) setStatistiquesHopitalId(null);
   }
 
   async function deleteHopital(id) {
     showConfirm("Confirmez-vous la suppression de cet hôpital ?", async () => {
       try {
-        const res = await fetch(`http://localhost:3000/api/hopitaux/${id}`, {
-          method: "DELETE",
-        });
+        const res = await fetch(`http://localhost:3000/api/hopitaux/${id}`, { method: "DELETE" });
         if (!res.ok) throw new Error("Erreur lors de la suppression");
         await fetchHopitaux();
       } catch (err) {
@@ -76,46 +78,88 @@ export default function ListeHopitaux() {
     });
   }
 
+  const getStatusBadgeClass = (statut) => {
+    if (!statut) return 'status-badge inconnu';
+    
+    // Normalise le statut (minuscules, remplace espaces/tirets par underscores)
+    const normalizedStatut = statut.toLowerCase()
+      .replace(/[- ]/g, '_')
+      .replace(/[éèê]/g, 'e');
+    
+    switch(normalizedStatut) {
+      case 'disponible':
+      case 'actif':
+      case 'approuve':
+      case 'approuvé':
+        return 'status-badge disponible';
+      
+      case 'en_intervention':
+      case 'en_mission':
+      case 'en_attente':
+        return 'status-badge en-intervention';
+      
+      case 'hors_service':
+      case 'inactif':
+      case 'rejete':
+      case 'rejeté':
+        return 'status-badge hors-service';
+      
+      case 'en_maintenance':
+      case 'en_conge':
+      case 'en_congé':
+        return 'status-badge en-maintenance';
+      
+      default:
+        return 'status-badge inconnu';
+    }
+  };
+
+  const getTypeBadgeClass = (type) => {
+    if (!type) return 'status-type inconnu';
+    
+    const normalizedType = type.toLowerCase()
+      .replace(/[éèê]/g, 'e')
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    switch(normalizedType) {
+      case 'medicalisee':
+      case 'medicalisée':
+        return 'status-type medicalisee';
+      case 'urgence':
+        return 'status-type urgence';
+      case 'transport':
+        return 'status-type transport';
+      default:
+        return 'status-type inconnu';
+    }
+  };
+
   return (
     <div className="liste-hopitaux-container">
-      {/* Boîte de dialogue de confirmation */}
       {showConfirmDialog && (
         <div className="confirm-dialog-overlay">
           <div className="confirm-dialog">
-            <div className="confirm-message">
-              {dialogConfig.message}
-            </div>
+            <div className="confirm-message">{dialogConfig.message}</div>
             <div className="confirm-buttons">
-              <button
-                onClick={() => setShowConfirmDialog(false)}
-                className="confirm-cancel"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={dialogConfig.onConfirm}
-                className="confirm-ok"
-              >
-                Confirmer
-              </button>
+              <button onClick={() => setShowConfirmDialog(false)} className="confirm-cancel">Annuler</button>
+              <button onClick={dialogConfig.onConfirm} className="confirm-ok">Confirmer</button>
             </div>
           </div>
         </div>
       )}
 
       <div className="header-container">
-        <h2 className="title">Liste des Hôpitaux</h2>
-        <div className="filter-container">
-          <input
-            type="text"
-            placeholder="Filtrer par nom"
-            value={filtreNom}
-            onChange={(e) => {
-              setFiltreNom(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="filter-input"
-          />
+        <div className="header">
+          <h2 className="header-title">Liste des Hôpitaux</h2>
+          <div className="filter-container">
+            <input
+              type="text"
+              placeholder="Filtrer par nom"
+              value={filtreNom}
+              onChange={(e) => { setFiltreNom(e.target.value); setCurrentPage(1); }}
+              className="filter-input"
+            />
+          </div>
         </div>
       </div>
 
@@ -128,38 +172,14 @@ export default function ListeHopitaux() {
               <div className="hopital-header">
                 <h3>{h.nom}</h3>
                 <div className="hopital-buttons">
-                  <button
-                    onClick={() => toggleDetails(h._id)}
-                    className="details-btn"
-                  >
+                  <button onClick={() => toggleDetails(h._id)} className="details-btn">
                     {expandedHopitalId === h._id ? "Masquer" : "Détails"}
                   </button>
-                 
+                  <button onClick={() => fetchStatistiques(h._id)} className="stats-btn">Statistiques</button>
                 </div>
               </div>
-              
+
               <p className="adresse">{h.adresse ?? "Adresse inconnue"}</p>
-              
-              <div className="basic-info">
-                <div>
-                  <strong>Nombre d'ambulances :</strong> {h.nombreAmbulances ?? "Inconnu"}
-                </div>
-                {Array.isArray(h.ambulances) && h.ambulances.length > 0 && (
-                  <div>
-                    <strong>Types d'ambulances :</strong>
-                    <ul className="ambulances-list">
-                      {['A', 'B', 'C'].map((type) => {
-                        const count = h.ambulances.filter(a => a.type === type).length;
-                        return count > 0 ? (
-                          <li key={type}>
-                            Type {type} : {count} ambulance{count > 1 ? 's' : ''}
-                          </li>
-                        ) : null;
-                      })}
-                    </ul>
-                  </div>
-                )}
-              </div>
 
               {expandedHopitalId === h._id && (
                 <div className="detailed-info">
@@ -193,39 +213,163 @@ export default function ListeHopitaux() {
                   </div>
                 </div>
               )}
+
+              {statistiquesHopitalId === h._id && statistiques && (
+                <div className="statistiques-section">
+                  <h4>Statistiques de l'hôpital</h4>
+
+                  <div className="stats-grid">
+                    <div className="stats-card">
+                      <h5>Interventions par gravité</h5>
+                      <ul>
+                        {statistiques.interventionsParGravite?.map((item, idx) => (
+                          <li key={idx}>
+                            <span className="stat-label">{item._id}:</span> 
+                            <span className="stat-value">{item.total}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="stats-card">
+                      <h5>Interventions par statut</h5>
+                      <ul>
+                        {statistiques.interventionsParStatut?.map((item, idx) => (
+                          <li key={idx}>
+                            <span className="stat-label">{item._id}:</span> 
+                            <span className="stat-value">{item.total}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="stats-card">
+                      <h5>Durée moyenne</h5>
+                      <div className="duration-display">
+                        {Math.floor(statistiques.dureeMoyenne / 60000)} min
+                      </div>
+                    </div>
+
+                    <div className="stats-card">
+                      <h5>Ambulances</h5>
+                      <ul>
+                        {statistiques.ambulancesStatut?.map((item, idx) => (
+                          <li key={idx}>
+                            <span className="stat-label">{item._id}:</span> 
+                            <span className="stat-value">{item.total}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="stats-card full-width">
+                      <h5>Détails des ambulances</h5>
+                      <table className="ambulances-table">
+                        <thead>
+                          <tr>
+                            <th>ID</th>
+                            <th>Type</th>
+                            <th>État</th>
+                            <th>Position</th>
+                            <th>Destination</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {statistiques.ambulances?.map((ambulance, idx) => (
+                            <tr key={idx}>
+                              <td>{ambulance.id}</td>
+                              <td>
+                                <span className={getTypeBadgeClass(ambulance.type)}>
+                                  {ambulance.type}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={getStatusBadgeClass(ambulance.etat)}>
+                                  {ambulance.etat}
+                                </span>
+                              </td>
+                              <td>
+                                {ambulance.position?.lat && ambulance.position?.lng 
+                                  ? `${ambulance.position.lat.toFixed(4)}, ${ambulance.position.lng.toFixed(4)}`
+                                  : 'Non disponible'}
+                              </td>
+                              <td>{ambulance.destination || 'Aucune'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="stats-card full-width">
+                      <h5>Ambulanciers ({statistiques.totalAmbulanciers})</h5>
+                      <table className="ambulanciers-table">
+                        <thead>
+                          <tr>
+                            <th>Nom</th>
+                            <th>Prénom</th>
+                            <th>Email</th>
+                            <th>Téléphone</th>
+                            <th>Statut</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {statistiques.ambulanciers?.map((ambulancier, idx) => (
+                            <tr key={idx}>
+                              <td>{ambulancier.nom}</td>
+                              <td>{ambulancier.prenom || '-'}</td>
+                              <td>{ambulancier.email}</td>
+                              <td>{ambulancier.telephone || '-'}</td>
+                              <td>
+                                <span className={getStatusBadgeClass(ambulancier.statut)}>
+                                  {ambulancier.statut}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {statistiques.appels?.length > 0 && (
+                      <div className="stats-card full-width">
+                        <h5>Appels récents ({statistiques.appels.length})</h5>
+                        <table className="appels-table">
+                          <thead>
+                            <tr>
+                              <th>Date</th>
+                              <th>Type</th>
+                              <th>Gravité</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {statistiques.appels.map((appel, idx) => (
+                              <tr key={idx}>
+                                <td>{new Date(appel.date).toLocaleString()}</td>
+                                <td>{appel.type || 'Non spécifié'}</td>
+                                <td className={`gravite-${appel.gravite?.toLowerCase()}`}>
+                                  {appel.gravite || 'Inconnue'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}
       </div>
 
-      {/* Pagination */}
       {hopitauxFiltres.length > itemsPerPage && (
         <div className="pagination">
-          <button
-            onClick={() => paginate(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="page-btn"
-          >
-            &lt;
-          </button>
-          
+          <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} className="page-btn">&lt;</button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
-            <button
-              key={number}
-              onClick={() => paginate(number)}
-              className={`page-btn ${currentPage === number ? 'active' : ''}`}
-            >
-              {number}
-            </button>
+            <button key={number} onClick={() => paginate(number)} className={`page-btn ${currentPage === number ? 'active' : ''}`}>{number}</button>
           ))}
-          
-          <button
-            onClick={() => paginate(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="page-btn"
-          >
-            &gt;
-          </button>
+          <button onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages} className="page-btn">&gt;</button>
         </div>
       )}
     </div>

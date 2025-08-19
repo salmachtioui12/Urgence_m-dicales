@@ -3,6 +3,7 @@ import axios from "axios";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { useNavigate } from 'react-router-dom';
 
 export default function DashboardHopital() {
   const [stats, setStats] = useState({
@@ -12,6 +13,7 @@ export default function DashboardHopital() {
   const [appels, setAppels] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
@@ -40,6 +42,10 @@ export default function DashboardHopital() {
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
   });
+const handleUnauthorized = () => {
+  localStorage.removeItem('token'); // On supprime le token
+  navigate('/login');              // Redirection vers la page login
+};
 
 useEffect(() => {
   if (!token || !user) return;
@@ -58,7 +64,11 @@ useEffect(() => {
     })
     .catch((err) => {
       console.error("Erreur lors de la récupération des ambulanciers :", err);
-      setError("Impossible de charger les ambulanciers.");
+ if (err.response?.status === 403) {
+    handleUnauthorized();
+  } else {
+    setError('Erreur lors du chargement des données');
+  }
     });
 }, [token, user]);
 

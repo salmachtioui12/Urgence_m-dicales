@@ -30,7 +30,11 @@ export default function ProfilAmbulancier() {
         setAmbulancier(response.data);
       } catch (err) {
         console.error(err);
-        setError("Erreur lors du chargement du profil.");
+         if (err.response?.status === 403) {
+    handleUnauthorized();
+  } else {
+    setError('Erreur lors du chargement des données');
+  }
       } finally {
         setLoading(false);
       }
@@ -50,6 +54,10 @@ export default function ProfilAmbulancier() {
   const handleUpdate = () => {
     navigate("/ambulancier/modifier");
   };
+const handleUnauthorized = () => {
+  localStorage.removeItem('token'); // On supprime le token
+  navigate('/login');              // Redirection vers la page login
+};
 
   // Fonction pour formater la date
   const formatDate = (dateString) => {

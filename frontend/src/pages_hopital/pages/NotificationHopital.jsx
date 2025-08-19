@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from 'react-router-dom';
 
 export default function AppelsHopital() {
   const [appels, setAppels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
+const handleUnauthorized = () => {
+  localStorage.removeItem('token'); // On supprime le token
+  navigate('/login');              // Redirection vers la page login
+};
 
   useEffect(() => {
     const fetchAppels = async () => {
@@ -26,7 +32,12 @@ export default function AppelsHopital() {
         setLoading(false);
       } catch (err) {
         console.error("❌ Erreur lors de la récupération des appels:", err);
-        setError("Impossible de récupérer les appels");
+      
+        if (err.response?.status === 403) {
+    handleUnauthorized();
+  } else {
+    setError('Erreur lors du chargement des données');
+  }
         setLoading(false);
       }
     };

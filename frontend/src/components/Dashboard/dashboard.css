@@ -119,7 +119,7 @@ body {
 }
 
 .stat-value {
-  font-weight: 600;
+  font-weight: 400;
   color: var(--primary);
 }
 
@@ -303,4 +303,49 @@ body {
 .chart-container.half {
   flex: 1 1 45%;
   min-height: 300px;
+}
+/* Style spécifique pour la carte Temps moyen */
+.stat-card.compact-time {
+  padding: 15px;
+}
+
+.stat-card.compact-time h2 {
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.time-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.time-value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.time-value .stat-value {
+  font-size: 1.8rem;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.time-value .stat-value.large {
+  font-size: 2rem;
+}
+
+.time-label {
+  font-size: 0.8rem;
+  color: var(--gray-dark);
+  margin-top: 5px;
+}
+
+.time-divider {
+  font-size: 1.5rem;
+  color: var(--gray);
+  margin: 0 10px;
 }

@@ -10,14 +10,43 @@ async function getTotalUrgencesTraitees() {
 }
 
 async function getTempsMoyenReponse() {
-  const interventions = await Intervention.find().select('heureDebut heureArrivee');
-  const delais = interventions.map(i => {
-    if (!i.heureDebut || !i.heureArrivee) return 0;
-    return (new Date(i.heureArrivee) - new Date(i.heureDebut)) / 1000 / 60; // en minutes
-  }).filter(t => t > 0);
-  const moyenne = delais.length ? delais.reduce((a, b) => a + b, 0) / delais.length : 0;
-  return moyenne.toFixed(2);
+  try {
+    const result = await Intervention.aggregate([
+      {
+        $match: {
+          finIntervention: { $ne: null },   // uniquement interventions terminées
+          statut: "terminée"
+        }
+      },
+      {
+        $project: {
+          duree: { $subtract: ["$finIntervention", "$debutIntervention"] } // en ms
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          moyenneMs: { $avg: "$duree" }
+        }
+      }
+    ]);
+
+    if (!result.length) {
+      return { moyenneMinutes: 0, moyenneHeures: 0 };
+    }
+
+    const moyenneMs = result[0].moyenneMs;
+    const moyenneMinutes = Math.round(moyenneMs / 60000); // arrondi en minutes
+    const moyenneHeures = (moyenneMs / 3600000).toFixed(2); // heures (2 décimales)
+
+    return { moyenneMinutes, moyenneHeures };
+
+  } catch (err) {
+    console.error("Erreur getTempsMoyenReponse:", err);
+    throw err;
+  }
 }
+
 
 async function getTauxOccupation() {
   const total = await Ambulance.countDocuments();
@@ -137,7 +166,7 @@ async function getAppelsParHeureDepuisDB() {
 
 module.exports = {
   getTotalUrgencesTraitees,
-  getTempsMoyenReponse,
+ getTempsMoyenReponse, 
   getTauxOccupation,
   getUrgencesParZone,
   /*getAgentsEnService,

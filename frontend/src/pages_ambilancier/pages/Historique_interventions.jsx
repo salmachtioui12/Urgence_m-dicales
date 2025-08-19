@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { useNavigate } from 'react-router-dom';
 
 export default function MesInterventions() {
   const [interventions, setInterventions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erreur, setErreur] = useState("");
+const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
+const handleUnauthorized = () => {
+  localStorage.removeItem('token'); // On supprime le token
+  navigate('/login');              // Redirection vers la page login
+};
 
   useEffect(() => {
     const fetchInterventions = async () => {
@@ -31,7 +37,12 @@ export default function MesInterventions() {
 
         setInterventions(response.data);
       } catch (err) {
-        setErreur("Erreur lors du chargement des interventions.");
+         if (err.response?.status === 403) {
+    handleUnauthorized();
+  } else {
+    setErreur("Erreur lors du chargement des interventions.");
+  }
+        
         console.error(err);
       } finally {
         setLoading(false);
