@@ -14,10 +14,12 @@ const Ambulancier = require('../models/Ambulancier');
 // GET /interventions/en-cours
 router.get("/en-cours", async (req, res) => {
   try {
+    // On cherche toutes les interventions avec statut "en cours"
+    // et on enrichit avec les infos d'appel et d'ambulance
     const interventions = await Intervention.find({ statut: "en cours" })
-      .populate("appelId")
-      .populate("ambulanceId")
-      .sort({ debutIntervention: -1 });
+      .populate("appelId")// Remplace l'ID par l'objet Appel complet
+      .populate("ambulanceId")// Remplace l'ID par l'objet Ambulance complet
+      .sort({ debutIntervention: -1 });// Trie du plus récent au plus ancien
 
     res.json(interventions);
   } catch (err) {
@@ -27,97 +29,7 @@ router.get("/en-cours", async (req, res) => {
 });
 
 
-// Marquer une intervention comme terminée
-/*router.put('/:id/finish', async (req, res) => {
-  try {
-    const intervention = await Intervention.findById(req.params.id);
-    if (!intervention) {
-      return res.status(404).json({ message: "Intervention non trouvée" });
-    }
 
-    intervention.statut = 'terminée';
-    intervention.finEstimee = new Date();
-    await intervention.save();
-
-    const appel = await updateAppelStatus(intervention.appelId, 'terminée');
- 
-      const updatedStats = await getAllStats();
-      notifierStatistiques(updatedStats);
-    return res.json({ message: "Intervention et appel terminés", appel });
-  } catch (error) {
-    console.error("Erreur lors de la fin d'intervention :", error);
-    return res.status(500).json({ message: "Erreur serveur" });
-  }
-});*/
-// PATCH pour terminer une intervention
-/*router.patch("/:id/terminer", async (req, res) => {
-  try {
-    const intervention = await Intervention.findById(req.params.id);
-    if (!intervention) return res.status(404).json({ message: "Introuvable" });
-
-    intervention.finIntervention = new Date();
-    intervention.statut = "terminée";
-    await intervention.save();
-// Mettre à jour l'état et statut de l'ambulance associée pour la rendre disponible
-    if (intervention.ambulanceId) {
-      await Ambulance.findByIdAndUpdate(intervention.ambulanceId, {
-        etat: 'disponible',
-        statut: 'disponible',
-        destination: null,
-      });
-    }
-       // Mettre à jour l'état de l'appel associé en "terminée"
-    if (intervention.appelId) {
-      await Appel.findByIdAndUpdate(intervention.appelId, {
-        etat: "terminée",
-      });
-    }
-    //  Notifier nouvelles stats après chaque appel généré
-      const updatedStats = await getAllStats();
-      notifierStatistiques(updatedStats);
-    res.json({ message: "Intervention terminée", intervention });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});*/
-/*router.patch("/:id/terminer", async (req, res) => {
-  try {
-    const intervention = await Intervention.findById(req.params.id);
-    if (!intervention) return res.status(404).json({ message: "Introuvable" });
-
-    intervention.finIntervention = new Date();
-    intervention.statut = "terminée";
-    await intervention.save();
-
-    // Mettre à jour l'état et statut de l'ambulance associée pour la rendre disponible
-    if (intervention.ambulanceId) {
-      await Ambulance.findByIdAndUpdate(intervention.ambulanceId, {
-        etat: 'disponible',
-        statut: 'disponible',
-        destination: null,
-      });
-    }
-
-    // Mettre à jour l'état de l'appel associé en "terminée"
-    if (intervention.appelId) {
-      await Appel.findByIdAndUpdate(intervention.appelId, {
-        etat: "terminée",
-      });
-
-      // Relancer l’algorithme d’affectation après la fin de l'appel
-      await prioriserEtAffecterAmbulances();
-
-      // Mettre à jour les stats et notifier
-      const updatedStats = await getAllStats();
-      notifierStatistiques(updatedStats);
-    }
-
-    res.json({ message: "Intervention terminée", intervention });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-*/
 // GET interventions de l'ambulancier connecté
 router.get('/mes-interventions', verifyToken, async (req, res) => {
   try {
@@ -142,14 +54,17 @@ router.get('/mes-interventions', verifyToken, async (req, res) => {
     res.status(500).json({ message: "Erreur serveur" });
   }
 });
+//  terminer une intervention
 async function terminerIntervention(interventionId) {
+   // Récupération de l'intervention
   const intervention = await Intervention.findById(interventionId);
   if (!intervention) throw new Error("Intervention introuvable");
 
+  // Marquer comme terminée et ajouter la date de fin
   intervention.finIntervention = new Date();
   intervention.statut = "terminée";
   await intervention.save();
-
+  // Libérer l'ambulance assignée
   if (intervention.ambulanceId) {
     await Ambulance.findByIdAndUpdate(intervention.ambulanceId, {
       etat: 'disponible',
@@ -157,20 +72,21 @@ async function terminerIntervention(interventionId) {
       destination: null,
     });
   }
-
+  //  Mettre à jour l'appel lié comme "terminé"
   if (intervention.appelId) {
     await Appel.findByIdAndUpdate(intervention.appelId, {
       etat: "terminée",
     });
   }
-
+ // Réaffecter les ambulances si nécessaire
   await prioriserEtAffecterAmbulances();
-
+  // Mettre à jour les stats en temps réel
   const updatedStats = await getAllStats();
   notifierStatistiques(updatedStats);
 
   return intervention;
 }
+//  Terminer une intervention (PATCH)
 router.patch("/:id/terminer", async (req, res) => {
   try {
     const intervention = await terminerIntervention(req.params.id);
@@ -179,6 +95,7 @@ router.patch("/:id/terminer", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+// Terminer une intervention (PUT, alternative)
 router.put("/:id/finish", async (req, res) => {
   try {
     const intervention = await terminerIntervention(req.params.id);

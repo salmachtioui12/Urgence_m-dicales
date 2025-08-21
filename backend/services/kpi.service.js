@@ -83,14 +83,7 @@ async function getRepartitionTypeUrgences() {
     }
   ]);
 }
-/*
-async function getInterventionsEnAttente() {
-  return await Intervention.countDocuments({ etat: 'en attente' });
-}
 
-async function getAgentsEnService() {
-  return await Agent.countDocuments({ enService: true });
-}*/
 // Appels par gravité avec filtre de date
 async function getAppelsParGravite({ debut, fin }) {
   const filtre = {};
@@ -169,8 +162,6 @@ module.exports = {
  getTempsMoyenReponse, 
   getTauxOccupation,
   getUrgencesParZone,
-  /*getAgentsEnService,
-  getInterventionsEnAttente,*/
   getRepartitionTypeUrgences,
   getAmbulancesDisponibles,
   getAppelsParGravite,

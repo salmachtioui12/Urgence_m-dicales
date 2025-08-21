@@ -5,7 +5,7 @@ function initWebSocket(server) {
   wss = new WebSocket.Server({ server });
 
   wss.on('connection', (ws) => {
-    console.log('🟢 Client WebSocket connecté');
+    console.log(' Client WebSocket connecté');
 
     // Lors de la connexion, le client doit s'authentifier (ex : envoyer son userId)
     ws.on('message', (message) => {
@@ -14,15 +14,15 @@ function initWebSocket(server) {
         if (parsed.type === 'REGISTER' && parsed.userId) {
           clientsMap.set(parsed.userId, ws);
           ws.userId = parsed.userId;
-          console.log(`✅ Ambulancier enregistré: ${parsed.userId}`);
+          console.log(`Ambulancier enregistré: ${parsed.userId}`);
         }
       } catch (err) {
-        console.error('❌ Erreur de message WebSocket:', err.message);
+        console.error(' Erreur de message WebSocket:', err.message);
       }
     });
 
     ws.on('close', () => {
-      console.log('🔴 Client WebSocket déconnecté');
+      console.log(' Client WebSocket déconnecté');
       if (ws.userId) {
         clientsMap.delete(ws.userId);
       }

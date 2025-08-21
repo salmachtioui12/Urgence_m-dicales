@@ -1,15 +1,16 @@
 const express = require('express');
 const router = express.Router();
 
-const Ambulancier = require('../models/Ambulancier');
-const Hopital = require('../models/Hopital');
-const verifyToken = require('../middlewares/auth.middleware'); // ✅ import correct
-const User = require('../models/User'); // adapte le chemin si besoin
+const Ambulancier = require('../models/Ambulancier'); // modèle ambulancier
+const Hopital = require('../models/Hopital');         // modèle hôpital
+const verifyToken = require('../middlewares/auth.middleware'); // middleware d’authentification JWT
+const User = require('../models/User');               // modèle utilisateur lié (compte)
 
-// 📌 GET profil ambulancier via email (non protégé)
+
+//  GET profil ambulancier via email (non protégé)
 router.get('/profil/:email', async (req, res) => {
   const email = req.params.email;
-
+// Cherche l’ambulancier par email
   try {
     const profil = await Ambulancier.findOne({ email });
 
@@ -30,10 +31,11 @@ router.patch('/profil/:email', async (req, res) => {
   const updates = req.body;
 
   try {
+    // Mise à jour des champs envoyés
     const updated = await Ambulancier.findOneAndUpdate(
       { email },
       { $set: updates },
-      { new: true }
+      { new: true }// retourne la version mise à jour
     );
 
     if (!updated) {
@@ -48,10 +50,11 @@ router.patch('/profil/:email', async (req, res) => {
 });
 router.get("/ambulanciers", verifyToken, async (req, res) => {
   try {
+    // ID extrait du JWT
     const userId = req.user.id;
     if (!userId) return res.status(401).json({ message: "User non authentifié" });
 
-    // Trouver l’hôpital connecté
+  // On récupère l’hôpital lié à ce user
     const hopital = await Hopital.findOne({ userId });
     if (!hopital) return res.status(404).json({ message: "Hôpital introuvable." });
 
@@ -71,7 +74,7 @@ router.get("/ambulanciers", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Erreur serveur." });
   }
 });
-// 🔥 Supprimer un ambulancier + son compte utilisateur
+//  Supprimer un ambulancier + son compte utilisateur
 const mongoose = require('mongoose');
 
 router.delete('/ambulancier/:id', verifyToken, async (req, res) => {
@@ -90,33 +93,35 @@ router.delete('/ambulancier/:id', verifyToken, async (req, res) => {
     console.log("🔎 Ambulancier récupéré :", ambulancier);
 
     if (!ambulancier) {
-      console.log("❌ Ambulancier non trouvé.");
+      console.log(" Ambulancier non trouvé.");
       return res.status(404).json({ message: "Ambulancier non trouvé." });
     }
 
     const userId = ambulancier.userId;
-    console.log("👤 ID du compte utilisateur lié :", userId);
-
+    console.log(" ID du compte utilisateur lié :", userId);
+ // Suppression de l’ambulancier
     await Ambulancier.findByIdAndDelete(ambulancierId);
-    console.log("🗑️ Ambulancier supprimé");
+    console.log(" Ambulancier supprimé");
 
+    // Suppression du compte utilisateur associé
     if (userId) {
       await User.findByIdAndDelete(userId);
-      console.log("🗑️ Compte utilisateur supprimé");
+      console.log(" Compte utilisateur supprimé");
     }
 
-    res.status(200).json({ message: "✅ Ambulancier et son compte utilisateur supprimés." });
+    res.status(200).json({ message: " Ambulancier et son compte utilisateur supprimés." });
   } catch (error) {
-    console.error("💥 Erreur lors de la suppression :", error);
+    console.error(" Erreur lors de la suppression :", error);
     res.status(500).json({ message: "Erreur serveur lors de la suppression.", error });
   }
 });
-// 📌 GET tous les ambulanciers avec leurs informations complètes
+// GET tous les ambulanciers avec leurs informations complètes
 router.get("/ambulanciers/all", verifyToken, async (req, res) => {
   try {
+     // Récupère tous les ambulanciers avec les infos du User lié
     const ambulanciers = await Ambulancier.find()
       .populate("userId", "email role status createdAt") // Infos de l'utilisateur lié
-      .lean();
+      .lean();// retourne des objets JS simples (pas des docs Mongoose)
 
     // Ajout des infos hôpital pour chaque ambulancier
     const result = await Promise.all(
@@ -136,7 +141,7 @@ router.get("/ambulanciers/all", verifyToken, async (req, res) => {
 
     res.status(200).json(result);
   } catch (err) {
-    console.error("💥 Erreur récupération ambulanciers:", err);
+    console.error(" Erreur récupération ambulanciers:", err);
     res.status(500).json({ message: "Erreur serveur lors de la récupération des ambulanciers." });
   }
 });

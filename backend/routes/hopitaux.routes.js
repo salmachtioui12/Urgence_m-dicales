@@ -9,12 +9,14 @@ router.get('/', async (req, res) => {
   if (!lat || !lng) return res.status(400).json({ error: "lat et lng requis" });
 
   try {
+    // Récupère les hôpitaux proches via Overpass API
     const overpassHopitaux = await fetchHopitauxNearby(lat, lng, radius);
 
+    // Fusionne les données Overpass avec celles en base Mongo
     const hopitauxComplets = await Promise.all(overpassHopitaux.map(async (hopital) => {
       const stock = await Hopital.findOne({ osmId: hopital.id });
  
-      //  Remplacer adresse si absente
+      // Si Overpass ne fournit pas d’adresse, on prend celle de la base
       const adresseFinale = hopital.adresse && hopital.adresse.trim() !== ""
         ? hopital.adresse
         : stock?.adresse ?? "Adresse inconnue";
@@ -115,7 +117,7 @@ module.exports = router;
 // routes/hopitaux.js
 router.put('/profil/:id', async (req, res) => {
   const id = req.params.id;
-
+ // Mise à jour en un seul appel (plus simple que la version précédente)
   try {
     const hopital = await Hopital.findByIdAndUpdate(id, req.body, { new: true });
     if (!hopital) return res.status(404).json({ message: 'Hôpital non trouvé' });
@@ -151,6 +153,7 @@ router.delete('/:id', async (req, res) => {
 
 router.get('/profil/:id', async (req, res) => {
   try {
+    
     const hopital = await Hopital.findById(req.params.id);
     if (!hopital) {
       return res.status(404).json({ message: "Hôpital non trouvé" });

@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-
+const bcrypt = require('bcryptjs');          // Pour hasher et comparer les mots de passe
+const jwt = require('jsonwebtoken');         // Pour générer et vérifier des JWT
+const User = require('../models/User');      // Modèle utilisateur
+const QRCode = require("qrcode");            // Génération de QR Codes
 const SECRET = process.env.JWT_SECRET || 'votre_clef_secrete';
 
 // Middleware pour vérifier token JWT
@@ -31,7 +31,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Champs obligatoires manquants' });
     }
 
-    // Validation selon rôle
+     // Si c’est un hôpital → il doit avoir une adresse et une position (lat/lng)
   if (role === 'hopital') {
   const { adresse, position } = details || {};
   if (!adresse || !position || typeof position.lat !== 'number' || typeof position.lng !== 'number') {
@@ -39,12 +39,14 @@ router.post('/register', async (req, res) => {
   }
 }
 
+    // Vérifie si l’email est déjà utilisé
 
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: 'Email déjà utilisé' });
-
+   // Hashage du mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Création du nouvel utilisateur
     const user = new User({
       nom,
       email,
@@ -54,9 +56,16 @@ router.post('/register', async (req, res) => {
       status: role === 'ambulancier' ? 'en_attente' : 'approuve'
     });
 
+// Génère un token QR permanent (lié au user)
+const qrToken = jwt.sign(
+  { userId: user._id },
+  SECRET,
+  { expiresIn: "365d" } // valable longtemps (1 an)
+);
+user.qrToken = qrToken; // ⚠️ Ajoute un champ `qrToken` dans ton modèle User
     await user.save();
 
-    // 🏥 Si le rôle est "hopital", crée l'entrée Hopital
+    //  Si le rôle est "hopital", crée l'entrée Hopital
     if (role === 'hopital') {
      const newHopital = new Hopital({
   nom,
@@ -116,14 +125,15 @@ router.post('/login', async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
-
+// Bloque les ambulanciers en attente
     if (user.role === 'ambulancier' && user.status === 'en_attente') {
       return res.status(403).json({ message: "Votre compte est en attente de validation par un hôpital." });
     }
-
+    // Vérifie le mot de passe
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: "Mot de passe incorrect" });
 
+    // Génère un JWT classique pour la session
     const token = jwt.sign(
       { id: user._id, role: user.role, email: user.email, nom: user.nom },
       SECRET,
@@ -150,7 +160,7 @@ router.post('/login', async (req, res) => {
 // Récupérer ambulanciers en attente pour un hôpital donné (route protégée)
 router.get('/demandes/ambulanciers/:hopitalNom', verifyToken, async (req, res) => {
   const { hopitalNom } = req.params;
- 
+   // Cherche les ambulanciers en attente rattachés à un hôpital donné
 
   try {
     const ambulanciers = await User.find({
@@ -175,30 +185,30 @@ router.patch('/valider/ambulancier/:id', verifyToken, async (req, res) => {
   const { id } = req.params;
 
   try {
-    // 1️⃣ On récupère le user à valider
+    //  On récupère le user à valider
     const user = await User.findById(id);
 
     if (!user || user.role !== 'ambulancier') {
       return res.status(404).json({ message: "Ambulancier introuvable" });
     }
 
-    // 2️⃣ On met à jour le statut du user
+    //  On met à jour le statut du user
     user.status = 'approuve';
     await user.save();
 
-    // 3️⃣ On récupère l'hôpital du user connecté (depuis token)
+    //  On récupère l'hôpital du user connecté (depuis token)
     const hopital = await Hopital.findOne({ userId: req.user.id });
     if (!hopital) {
       return res.status(404).json({ message: "Hôpital valideur introuvable" });
     }
 
-    // 4️⃣ On crée un ambulancier lié à cet hôpital
+    //  On crée un ambulancier lié à cet hôpital
     const newAmbulancier = new Ambulancier({
       ...user.details, // merge avec les détails
       email: user.email,
       nom:user.nom,
       userId: user._id,
-      hopitalId: hopital._id, // ✅ ajoute l'id ObjectId de l'hôpital
+      hopitalId: hopital._id, 
       emailHopital: hopital.contact?.email || "",
     });
 
@@ -232,5 +242,54 @@ router.patch('/rejeter/ambulancier/:id', verifyToken, async (req, res) => {
   }
 });
 
+router.post("/qr/login", async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    // Vérifie le token QR permanent
+    const decoded = jwt.verify(token, SECRET);
+
+    const user = await User.findById(decoded.userId);
+    if (!user) return res.status(404).json({ message: "Utilisateur introuvable" });
+
+    // Génère un vrai access token de session
+    const accessToken = jwt.sign(
+      { id: user._id, role: user.role, email: user.email },
+      SECRET,
+      { expiresIn: "2h" }
+    );
+
+    res.json({
+      token: accessToken,
+      user: {
+        id: user._id,
+        nom: user.nom,
+        role: user.role,
+        email: user.email,
+        status: user.status,
+      }
+    });
+  } catch (err) {
+    console.error("Erreur QR login:", err);
+    res.status(401).json({ message: "QR invalide ou expiré" });
+  }
+});
+//afficher le qr
+router.get("/qr/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+
+    if (!user || !user.qrToken) {
+      return res.status(404).json({ message: "QR non trouvé" });
+    }
+ // Transforme le token QR en image DataURL
+    const qrDataUrl = await QRCode.toDataURL(user.qrToken);
+    res.json({ qr: qrDataUrl });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur génération QR" });
+  }
+});
 
 module.exports = router;

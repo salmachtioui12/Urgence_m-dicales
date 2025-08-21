@@ -1,18 +1,20 @@
 const Notification = require('../models/Notification');
 const Appel = require('../models/Appel');
 const { notifierCasCritique } = require('../websocket');
-
+  // Cherche tous les appels critiques qui n'ont pas encore d'ambulance affectée
+  // et qui n'ont pas encore été notifiés
 async function verifierEtNotifierCritiquesNonAffectes() {
+  
   const appelsCritiques = await Appel.find({
     gravite: 'critique',
     ambulanceAffectee: null,
       notifie: false
   });
-
+// Vérifie si une notification existe déjà pour cet appel
   for (const appel of appelsCritiques) {
     const existe = await Notification.findOne({ appelId: appel._id });
     if (existe) continue;
-
+  // Prépare les données de notification
     const notificationData = {
       appelId: appel._id,
       patientName: appel.patientName,
@@ -22,10 +24,12 @@ async function verifierEtNotifierCritiquesNonAffectes() {
       dateNotification: new Date()
     };
 
+    // Sauvegarde la notification dans la base
     const notif = new Notification(notificationData);
     await notif.save();
+     // Met à jour l'appel pour marquer qu'il a été notifié
 await Appel.findByIdAndUpdate(appel._id, { notifie: true });
-
+    // Envoi de la notification en temps réel via WebSocket
     notifierCasCritique({
       _id: notif._id,
       ...notificationData

@@ -13,7 +13,9 @@ import {
   Bell,
   ChevronDown,
   ChevronUp,
-  Package // Nouvelle icône pour Ressources
+  Package,
+  QrCode,
+  X
 } from "lucide-react";
 import WebSocketNotifications from "../WebSocketNotifications";
 
@@ -24,12 +26,16 @@ export default function LayoutDashboard() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
   const [ambulancesOpen, setAmbulancesOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 768;
+      const mobile = window.innerWidth < 970;
       setIsMobile(mobile);
-      if (!mobile) setMenuOpen(false);
+      if (!mobile) {
+        setMenuOpen(false);
+        setSidebarOpen(false);
+      }
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -111,6 +117,49 @@ export default function LayoutDashboard() {
     width: "100%",
   };
 
+  // Styles pour la sidebar (uniquement en mode mobile)
+  const sidebarStyle = {
+    position: "fixed",
+    top: 0,
+    left: sidebarOpen ? "0" : "-250px",
+    width: "250px",
+    height: "100vh",
+    backgroundColor: "#ffffff",
+    display: "flex",
+    flexDirection: "column",
+    paddingTop: "20px",
+    boxShadow: "2px 0 10px rgba(0, 0, 0, 0.2)",
+    zIndex: 2000,
+    transition: "left 0.3s ease",
+    overflowY: "auto",
+  };
+
+  const sidebarLinkStyle = {
+    color: "#2c3e50",
+    textDecoration: "none",
+    padding: "15px 20px",
+    display: "flex",
+    alignItems: "center",
+    gap: "15px",
+    transition: "all 0.3s ease",
+  };
+
+  const sidebarActiveLinkStyle = {
+    backgroundColor: "#2979ff",
+    color: "#fff",
+  };
+
+  const overlayStyle = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    zIndex: 1500,
+    display: sidebarOpen && isMobile ? "block" : "none",
+  };
+
   const menu = [
     { icon: <Home size={20} />, label: "Accueil", path: "/dashboard" },
     { icon: <Map size={20} />, label: "Cart", path: "/cart" },
@@ -118,28 +167,136 @@ export default function LayoutDashboard() {
     { icon: <Hospital size={20} />, label: "Hôpitaux", path: "/hopitaux" },
     { icon: <ListOrdered size={20} />, label: "Interventions", path: "/interventions" },
     { icon: <BarChart2 size={20} />, label: "Statistiques", path: "/statistiques" },
+    { icon: <QrCode size={20} />, label: "MyQrCode", path: "/MyQrCode" },
   ];
 
   return (
     <div>
-      <nav style={navStyle}>
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          <NavLink to="/dashboard" style={logoStyle}>
-            <Hospital size={24} /> Dashboard
-          </NavLink>
-          <button 
-            style={{ 
-              background: "none", 
-              border: "none", 
-              cursor: "pointer",
-              display: isMobile ? "block" : "none" 
-            }} 
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            <Menu size={24} />
-          </button>
+      {/* Overlay pour mobile */}
+      <div style={overlayStyle} onClick={() => setSidebarOpen(false)}></div>
+      
+      {/* Sidebar (uniquement en mode mobile) */}
+      {isMobile && (
+        <div style={sidebarStyle}>
+          <div style={{ padding: "0 20px 15px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #e0e0e0" }}>
+            <h2 style={{ color: "#2c3e50", margin: 0, fontSize: "1.2rem" }}>Menu</h2>
+            <X 
+              size={24} 
+              color="#2c3e50" 
+              onClick={() => setSidebarOpen(false)} 
+              style={{ cursor: "pointer" }}
+            />
+          </div>
+          
+          <nav style={{ flex: 1, padding: "10px 0" }}>
+            {menu.map((item, index) => (
+              <NavLink
+                key={index}
+                to={item.path}
+                style={({ isActive }) => ({
+                  ...sidebarLinkStyle,
+                  ...(isActive ? sidebarActiveLinkStyle : {}),
+                })}
+                onClick={() => setSidebarOpen(false)}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+            
+            {/* Section Ressources dans la sidebar */}
+            <div 
+              style={{ 
+                padding: "15px 20px", 
+                color: "#2c3e50", 
+                fontWeight: "bold", 
+                borderTop: "1px solid #e0e0e0", 
+                marginTop: "10px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                cursor: "pointer"
+              }}
+              onClick={() => setAmbulancesOpen(!ambulancesOpen)}
+            >
+              <span>Ressources</span>
+              {ambulancesOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </div>
+            
+            <div style={{ display: ambulancesOpen ? "block" : "none" }}>
+              <NavLink
+                to="/ambulances"
+                style={({ isActive }) => ({
+                  ...sidebarLinkStyle,
+                  ...(isActive ? sidebarActiveLinkStyle : {}),
+                  paddingLeft: "40px",
+                })}
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Ambulance size={20} />
+                <span>Liste des ambulances</span>
+              </NavLink>
+              <NavLink
+                to="/ambulancier"
+                style={({ isActive }) => ({
+                  ...sidebarLinkStyle,
+                  ...(isActive ? sidebarActiveLinkStyle : {}),
+                  paddingLeft: "40px",
+                })}
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Package size={20} />
+                <span>Liste des ambulanciers</span>
+              </NavLink>
+            </div>
+          </nav>
+          
+          <div style={{ padding: "20px", borderTop: "1px solid #e0e0e0" }}>
+            <button
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                navigate("/login");
+              }}
+              style={{
+                width: "100%",
+                padding: "12px",
+                backgroundColor: "#f44336",
+                border: "none",
+                color: "#fff",
+                borderRadius: "6px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+              }}
+            >
+              <LogOut size={18} />
+              Déconnexion
+            </button>
+          </div>
         </div>
+      )}
 
+      <nav style={navStyle}>
+        {/* Bouton pour ouvrir la sidebar en mode mobile */}
+        {isMobile && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <Menu size={24} color="#2c3e50" />
+          </button>
+        )}
+        
         <ul style={ulStyle}>
           {menu.map((item, index) => (
             <li key={index}>
@@ -167,7 +324,7 @@ export default function LayoutDashboard() {
                 cursor: "pointer",
               }}
             >
-              <Package size={20} /> {/* Icône changée de Ambulance à Package */}
+              <Package size={20} />
               {!isMobile && (
                 <>
                   Ressources
@@ -207,28 +364,30 @@ export default function LayoutDashboard() {
 
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <WebSocketNotifications />
-          <button
-            onClick={() => {
-              localStorage.removeItem("token");
-              localStorage.removeItem("user");
-              navigate("/login");
-            }}
-            style={{
-              padding: "0.5rem 1rem",
-              backgroundColor: "#f44336",
-              border: "none",
-              color: "#fff",
-              borderRadius: "50px",
-              fontWeight: "bold",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-            }}
-          >
-            <LogOut size={18} />
-            {!isMobile && "Déconnexion"}
-          </button>
+          {!isMobile && (
+            <button
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                navigate("/login");
+              }}
+              style={{
+                padding: "0.5rem 1rem",
+                backgroundColor: "#f44336",
+                border: "none",
+                color: "#fff",
+                borderRadius: "50px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
+              <LogOut size={18} />
+              Déconnexion
+            </button>
+          )}
         </div>
       </nav>
 

@@ -40,6 +40,8 @@ import HistoriqueInterventions from "./pages_ambilancier/pages/Historique_interv
 import NotificationsAmbulancier from "./pages_ambilancier/pages/NotificationsAmbulancier";
 import ProfilAmbulancier from "./pages_ambilancier/pages/ProfilAmbulancier";
 import ModifierProfilAmbulancier from "./pages_ambilancier/pages/ModifierProfilAmbulancier";
+import LoginQR from "./pages/LoginQR";
+import MyQrCode from "./pages/MyQrCode";
 
 
 // 🔐 Fonction rôle
@@ -73,7 +75,9 @@ export default function AppRoutes() {
   if (
     role === null &&
     location.pathname !== "/login" &&
-    location.pathname !== "/register"
+    location.pathname !== "/register"&&
+       location.pathname !== "/connexionwithQR" 
+          
   ) {
     return <div>Chargement...</div>;
   }
@@ -82,6 +86,8 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/connexionwithQR" element={<LoginQR />} />
+      
 
       {/* 📦 Opérateur */}
       {role === "operateur" && (
@@ -104,6 +110,7 @@ export default function AppRoutes() {
           <Route path="demandes-ambulanciers" element={<DemandesAmbulanciers />} />
            <Route path="/statistiques" element={<Listeusers/>} />
             <Route path="/ambulancier" element={<AmbulanciersList/>} />
+              <Route path="MyQrCode" element={<MyQrCode/>} />
         </Route>
       )}
 
@@ -124,7 +131,7 @@ export default function AppRoutes() {
           <Route path="appels" element={<NotificationHopital />} />
           <Route path="modification" element={<ModifierProfilHopital />} />
           <Route path="affectation" element={<Affectation />} />
-         
+          <Route path="MyQrCode" element={<MyQrCode/>} />
           
         </Route>
       )}
@@ -145,6 +152,7 @@ export default function AppRoutes() {
           <Route path="notifications" element={<NotificationsAmbulancier />} />
           <Route path="profil" element={<ProfilAmbulancier />} />
           <Route path="modifier" element={<ModifierProfilAmbulancier />} />
+           <Route path="MyQrCode" element={<MyQrCode/>} />
         </Route>
       )}
 

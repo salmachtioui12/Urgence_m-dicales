@@ -6,6 +6,7 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ['hopital', 'ambulancier'], required: true },
   details: { type: mongoose.Schema.Types.Mixed, default: {} },
+   qrToken: String, // 🔥 ajouté
   status: {
     type: String,
     enum: ['en_attente', 'approuve', 'rejete'],

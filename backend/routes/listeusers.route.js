@@ -39,7 +39,7 @@ router.get('/users', verifyToken, async (req, res) => {
   }
 });
 
-// ✅ Route spéciale pour les stats hebdomadaires
+//  Route spéciale pour les stats hebdomadaires
 router.get("/users/weekly-registrations", async (req, res) => {
   try {
     const registrations = await User.aggregate([
@@ -96,7 +96,7 @@ router.get("/users/hopitaux-ambulanciers", verifyToken, async (req, res) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
-// ⚠️ Placer APRÈS pour éviter le conflit
+
 // GET /users/:id - Récupérer les détails selon le rôle
 router.get('/users/:id', verifyToken, async (req, res) => {
   try {

@@ -217,7 +217,18 @@ export default function LayoutHopital() {
               Profil
             </NavLink>
           </li>
-          
+          <li>
+            <NavLink
+              to="/hopital/MyQrCode"
+              style={({ isActive }) => ({
+                ...linkStyle,
+                ...(isActive ? activeLinkStyle : {}),
+              })}
+            >
+                MyQrCode
+            </NavLink>
+          </li>
+        
           {isMobile && (
             <>
               

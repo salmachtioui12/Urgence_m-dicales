@@ -188,6 +188,17 @@ export default function LayoutAmbulancier() {
               Profil
             </NavLink>
           </li>
+             <li>
+            <NavLink
+              to="/ambulancier/MyQrCode"
+              style={({ isActive }) => ({
+                ...linkStyle,
+                ...(isActive ? activeLinkStyle : {}),
+              })}
+            >
+             MyQrCode
+            </NavLink>
+          </li>
           
           {isMobile && (
             <div style={actionButtonsStyle}>

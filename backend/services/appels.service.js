@@ -234,21 +234,21 @@ async function updateAppelStatus(id, newStatus) {
 }
 
 
-
+// Affecter manuellement une ambulance à un appel
 async function affecterAmbulance(idAppel, idAmbulance) {
   return Appel.findByIdAndUpdate(idAppel, {
     ambulanceAffectee: idAmbulance,
     etat: "en intervention",
   });
 }
-
+// Démarrer un générateur automatique d’appels (toutes les 30–60s)
 function startAutoGeneration() {
   if (!intervalId) {
     intervalId = setInterval(() => genererAppel(), 30000 + Math.random() * 30000);
     console.log(" Génération automatique d'appels démarrée");
   }
 }
-
+// Arrêter la génération automatique
 function stopAutoGeneration() {
   if (intervalId) {
     clearInterval(intervalId);
