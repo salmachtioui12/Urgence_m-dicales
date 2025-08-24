@@ -126,29 +126,29 @@ npm start
 
 ➡️ Accessible sur : http://localhost:3001
 
-🔐 Variables d’Environnement (Backend)
+## 🔐 Variables d’Environnement (Backend)
 
 Exemple de fichier .env :
-
+ ```bash
 MONGO_URI=mongodb://localhost:27017/hopitaux
 PORT=3000
-SECRET=VotreCléSecrèteJWTSuperSecurisée
-
-🧪 Comptes de Test
+ ```
+---
+## 🧪 Comptes de Test
 
 Création via l’endpoint : POST /api/auth/register
 
 Possibilité d’utiliser un script de seeding pour remplir la base
 
-👥 Rôles et Accès
+## 👥 Rôles et Accès
 
 Opérateur (Admin) : supervision complète (utilisateurs, stats, appels, interventions)
 
 Hôpital : gestion du profil, ambulanciers, ambulances, statistiques locales
 
 Ambulancier : gestion des missions, profil, historique
-
-🌐 URLs
+---
+## 🌐 URLs
 
 Frontend : http://localhost:3001
 
@@ -156,7 +156,7 @@ Backend API : http://localhost:3000
 
 Base MongoDB : mongodb://localhost:27017/hopitaux
 
-🐛 Dépannage
+##  Dépannage
 
 ❌ Erreur de connexion BDD : Vérifier que MongoDB est lancé + MONGO_URI correct
 
