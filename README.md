@@ -92,15 +92,17 @@ Elle permet le suivi **en temps réel** des interventions, la gestion des ressou
 
 ### 🔹 Étapes d’installation
 
-#### 1️⃣ Cloner le dépôt
-
+1️⃣ Cloner le dépôt
 git clone <url-du-depot>
-
 cd nom-du-projet
-#### 2️⃣ Configuration du Backend
+
+2️⃣ Configuration du Backend
 cd backend
 npm install
-Créer un fichier .env dans le dossier backend :
+
+
+Créer un fichier .env dans le dossier backend avec le contenu suivant :
+
 MONGO_URI=mongodb://localhost:27017/hopitaux
 PORT=3000
 SECRET=VotreCléSecrèteJWTSuperSecurisée
