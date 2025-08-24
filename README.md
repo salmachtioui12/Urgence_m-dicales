@@ -98,5 +98,70 @@ git clone <url-du-depot>
 cd nom-du-projet
 ```
  2️⃣ Configuration du Backend
+ ```bash
 cd backend
 npm install
+ ```
+Créer un fichier .env dans le dossier backend avec le contenu suivant :
+ ```bash
+MONGO_URI=mongodb://localhost:27017/hopitaux
+PORT=3000
+ ```
+
+
+
+Démarrer le backend :
+ ```bash
+npm run dev
+ ```
+
+➡️ Accessible sur : http://localhost:3000
+
+3️⃣ Configuration du Frontend
+ ```bash
+cd frontend
+npm install
+npm start
+ ```
+
+➡️ Accessible sur : http://localhost:3001
+
+🔐 Variables d’Environnement (Backend)
+
+Exemple de fichier .env :
+
+MONGO_URI=mongodb://localhost:27017/hopitaux
+PORT=3000
+SECRET=VotreCléSecrèteJWTSuperSecurisée
+
+🧪 Comptes de Test
+
+Création via l’endpoint : POST /api/auth/register
+
+Possibilité d’utiliser un script de seeding pour remplir la base
+
+👥 Rôles et Accès
+
+Opérateur (Admin) : supervision complète (utilisateurs, stats, appels, interventions)
+
+Hôpital : gestion du profil, ambulanciers, ambulances, statistiques locales
+
+Ambulancier : gestion des missions, profil, historique
+
+🌐 URLs
+
+Frontend : http://localhost:3001
+
+Backend API : http://localhost:3000
+
+Base MongoDB : mongodb://localhost:27017/hopitaux
+
+🐛 Dépannage
+
+❌ Erreur de connexion BDD : Vérifier que MongoDB est lancé + MONGO_URI correct
+
+❌ Erreur CORS : Vérifier que le frontend (3001) communique bien avec le backend (3000)
+
+❌ WebSocket inactif : Vérifier son initialisation dans server.js
+
+❌ Port déjà utilisé : Modifier le port dans .env ou libérer le port occupé
