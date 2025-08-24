@@ -97,7 +97,7 @@ Elle permet le suivi **en temps réel** des interventions, la gestion des ressou
 git clone <url-du-depot>
 cd nom-du-projet
 2️⃣ Configuration du Backend
-```bash
+bash
 cd backend
 npm install
 Créer un fichier .env dans le dossier backend :
