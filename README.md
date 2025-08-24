@@ -117,17 +117,19 @@ npm start
 ➡️ Accessible sur : http://localhost:3001
 
 🔐 Variables d’Environnement (Backend)
+---
 Exemple de fichier .env :
 
 MONGO_URI=mongodb://localhost:27017/hopitaux
 PORT=3000
-SECRET=maSuperCléSecrèteJWTPourSignerLesTokens
+
 🧪 Comptes de Test
 Création via l’endpoint : POST /api/auth/register
 
 Possibilité d’utiliser un script de seeding pour remplir la base
 
 👥 Rôles et Accès
+---
 Opérateur (Admin) : supervision complète (utilisateurs, stats, appels, interventions)
 
 Hôpital : gestion du profil, ambulanciers, ambulances, statistiques locales
