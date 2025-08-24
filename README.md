@@ -139,7 +139,7 @@ PORT=3000
 Création via l’endpoint : POST /api/auth/register
 
 Possibilité d’utiliser un script de seeding pour remplir la base
-
+---
 ## 👥 Rôles et Accès
 
 Opérateur (Admin) : supervision complète (utilisateurs, stats, appels, interventions)
@@ -155,7 +155,7 @@ Frontend : http://localhost:3001
 Backend API : http://localhost:3000
 
 Base MongoDB : mongodb://localhost:27017/hopitaux
-
+---
 ##  Dépannage
 
 ❌ Erreur de connexion BDD : Vérifier que MongoDB est lancé + MONGO_URI correct
