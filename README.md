@@ -96,3 +96,108 @@ Elle permet le suivi **en temps réel** des interventions, la gestion des ressou
 ```bash
 git clone <url-du-depot>
 cd nom-du-projet
+Backend
+
+cd backend
+npm install
+
+
+Créer un fichier .env :
+
+MONGO_URI=mongodb://localhost:27017/hopitaux
+PORT=3000
+SECRET=VotreCléSecrèteJWTSuperSecurisée
+
+
+Démarrer le backend :
+
+npm run dev
+
+
+➡️ Accessible sur : http://localhost:3000
+
+Frontend
+
+cd frontend
+npm install
+npm start
+
+
+➡️ Accessible sur : http://localhost:3001
+
+📁 Structure du Projet
+nom-du-projet/
+├── backend/                 # API Node.js/Express (Port: 3000)
+│   ├── controllers/         # Logique métier
+│   ├── models/              # Schémas Mongoose (User, Appel, Ambulance...)
+│   ├── routes/              # Endpoints API
+│   ├── middleware/          # Authentification, gestion erreurs...
+│   ├── services/            # Génération appels, WebSocket...
+│   ├── .env                 # Variables d'environnement
+│   └── server.js            # Point d'entrée du backend
+├── frontend/                # Application React (Port: 3001)
+│   ├── src/
+│   │   ├── components/      # Composants réutilisables
+│   │   ├── pages/           # Pages principales
+│   │   ├── hooks/           # Hooks personnalisés
+│   │   ├── contexts/        # Contexts (Auth, WebSocket...)
+│   │   └── styles/          # CSS/SCSS
+│   └── package.json
+└── README.md
+
+🔐 Variables d’Environnement (Backend)
+MONGO_URI=mongodb://localhost:27017/hopitaux
+PORT=3000
+SECRET=maSuperCléSecrèteJWTPourSignerLesTokens
+
+🧪 Comptes de Test
+
+Création via POST /api/auth/register
+
+Possibilité d’utiliser un script de seeding pour remplir la base.
+
+👥 Rôles et Accès
+
+Opérateur (Admin) : supervision complète (users, stats, appels, interventions).
+
+Hôpital : gestion du profil, ambulanciers, ambulances, stats locales.
+
+Ambulancier : gestion des missions, profil, historique.
+
+🌐 URLs
+
+Frontend : http://localhost:3001
+
+Backend API : http://localhost:3000
+
+Base MongoDB : mongodb://localhost:27017/hopitaux
+
+🐛 Dépannage
+
+Erreur BDD : Vérifier que MongoDB est lancé et que MONGO_URI est correct.
+
+Erreur CORS : Vérifier que le frontend (3001) accède au backend (3000).
+
+WebSocket inactif : Vérifier son initialisation dans server.js.
+
+Port déjà utilisé : Modifier le port dans .env ou libérer le port.
+
+🤝 Contribution
+
+Les contributions sont les bienvenues !
+
+Forkez le projet
+
+Créez une branche (feature/ma-fonctionnalite)
+
+Committez vos changements
+
+Push et ouvrez une Pull Request 🚀
+
+📄 Licence
+
+Ce projet est sous licence MIT.
+Voir le fichier LICENSE
+ pour plus de détails.
+
+💡 Développé avec ❤️ pour améliorer la gestion des urgences médicales.
