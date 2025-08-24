@@ -83,70 +83,73 @@ Elle permet le suivi **en temps réel** des interventions, la gestion des ressou
 
 ---
 
-## 🚀 Installation et Démarrage
+🚀 Installation et Démarrage
+🔹 Prérequis
 
-### 🔹 Prérequis
-- Node.js (v18+)  
-- npm ou yarn  
-- MongoDB (local ou distant : Atlas)  
+Avant de commencer, assurez-vous d’avoir installé :
 
-### 🔹 Étapes
+Node.js (v18 ou supérieure)
 
-1. **Cloner le dépôt**
-```bash
+npm ou yarn
+
+MongoDB (en local ou une instance distante comme MongoDB Atlas)
+
+🔹 Étapes d’installation
+1. Cloner le dépôt
 git clone <url-du-depot>
 cd nom-du-projet
-Backend
 
+2. Configuration du Backend
 cd backend
 npm install
 
 
-Créer un fichier .env :
+Créer un fichier .env dans le dossier backend avec le contenu suivant :
 
 MONGO_URI=mongodb://localhost:27017/hopitaux
 PORT=3000
 SECRET=VotreCléSecrèteJWTSuperSecurisée
 
 
-Démarrer le backend :
+Démarrer le serveur backend :
 
 npm run dev
 
 
-➡️ Accessible sur : http://localhost:3000
+➡️ Le backend sera accessible sur : http://localhost:3000
 
-Frontend
-
+3. Configuration du Frontend
 cd frontend
 npm install
 npm start
 
 
-➡️ Accessible sur : http://localhost:3001
+➡️ Le frontend sera accessible sur : http://localhost:3001
 
+🔐 Variables d’Environnement (Backend)
 
+Exemple de fichier .env :
 
- Variables d’Environnement (Backend)
 MONGO_URI=mongodb://localhost:27017/hopitaux
 PORT=3000
 SECRET=maSuperCléSecrèteJWTPourSignerLesTokens
 
- Comptes de Test
+🧪 Comptes de Test
 
-Création via POST /api/auth/register
+Création via l’endpoint :
+POST /api/auth/register
 
-Possibilité d’utiliser un script de seeding pour remplir la base.
+Possibilité d’utiliser un script de seeding pour remplir la base avec des données fictives.
 
- Rôles et Accès
+👥 Rôles et Accès
 
-Opérateur (Admin) : supervision complète (users, stats, appels, interventions).
+Opérateur (Admin) : supervision complète (utilisateurs, stats, appels, interventions).
 
-Hôpital : gestion du profil, ambulanciers, ambulances, stats locales.
+Hôpital : gestion du profil, ambulanciers, ambulances, statistiques locales.
 
 Ambulancier : gestion des missions, profil, historique.
 
- URLs
+🌐 URLs
 
 Frontend : http://localhost:3001
 
@@ -154,15 +157,15 @@ Backend API : http://localhost:3000
 
 Base MongoDB : mongodb://localhost:27017/hopitaux
 
- Dépannage
+🐛 Dépannage
 
-Erreur BDD : Vérifier que MongoDB est lancé et que MONGO_URI est correct.
+Erreur de connexion BDD : Vérifiez que MongoDB est lancé et que MONGO_URI est correct.
 
-Erreur CORS : Vérifier que le frontend (3001) accède au backend (3000).
+Erreur CORS : Vérifiez que le frontend (port 3001) communique bien avec le backend (port 3000).
 
-WebSocket inactif : Vérifier son initialisation dans server.js.
+WebSocket ne fonctionne pas : Vérifiez qu’il est bien initialisé dans server.js.
 
-Port déjà utilisé : Modifier le port dans .env ou libérer le port.
+Port déjà utilisé : Changez le port dans le fichier .env ou libérez le port occupé.
 
 
 
