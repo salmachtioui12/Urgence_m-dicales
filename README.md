@@ -96,7 +96,7 @@ Elle permet le suivi **en temps réel** des interventions, la gestion des ressou
 ```bash
 git clone <url-du-depot>
 cd nom-du-projet
- 2️⃣ Configuration du Backend
 
+ 2️⃣ Configuration du Backend
 cd backend
 npm install
