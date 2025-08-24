@@ -133,15 +133,17 @@ Opérateur (Admin) : supervision complète (utilisateurs, stats, appels, interve
 Hôpital : gestion du profil, ambulanciers, ambulances, statistiques locales
 
 Ambulancier : gestion des missions, profil, historique
----
+
 🌐 URLs
+---
 Frontend : http://localhost:3001
 
 Backend API : http://localhost:3000
 
 Base MongoDB : mongodb://localhost:27017/hopitaux
----
+
 🐛 Dépannage
+---
 ❌ Erreur de connexion BDD : Vérifier que MongoDB est lancé + MONGO_URI correct
 
 ❌ Erreur CORS : Vérifier que le frontend (3001) communique bien avec le backend (3000)
