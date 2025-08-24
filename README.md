@@ -98,23 +98,20 @@ git clone <url-du-depot>
 cd nom-du-projet
 2️⃣ Configuration du Backend
 bash
-Copier
-Modifier
+
 cd backend
 npm install
 Créer un fichier .env dans le dossier backend :
 
 env
-Copier
-Modifier
+
 MONGO_URI=mongodb://localhost:27017/hopitaux
 PORT=3000
 SECRET=VotreCléSecrèteJWTSuperSecurisée
 Démarrer le backend :
 
 bash
-Copier
-Modifier
+
 npm run dev
 ➡️ Accessible sur : http://localhost:3000
 
