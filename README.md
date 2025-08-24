@@ -93,31 +93,21 @@ Elle permet le suivi **en temps réel** des interventions, la gestion des ressou
 ### 🔹 Étapes d’installation
 
 #### 1️⃣ Cloner le dépôt
-```bash
+
 git clone <url-du-depot>
 cd nom-du-projet
-2️⃣ Configuration du Backend
-bash
+#### 2️⃣ Configuration du Backend
 cd backend
 npm install
 Créer un fichier .env dans le dossier backend :
-
-env
-
 MONGO_URI=mongodb://localhost:27017/hopitaux
 PORT=3000
 SECRET=VotreCléSecrèteJWTSuperSecurisée
 Démarrer le backend :
-
-bash
-
 npm run dev
 ➡️ Accessible sur : http://localhost:3000
 
-3️⃣ Configuration du Frontend
-bash
-Copier
-Modifier
+#### 3️⃣ Configuration du Frontend
 cd frontend
 npm install
 npm start
@@ -126,9 +116,6 @@ npm start
 🔐 Variables d’Environnement (Backend)
 Exemple de fichier .env :
 
-env
-Copier
-Modifier
 MONGO_URI=mongodb://localhost:27017/hopitaux
 PORT=3000
 SECRET=maSuperCléSecrèteJWTPourSignerLesTokens
