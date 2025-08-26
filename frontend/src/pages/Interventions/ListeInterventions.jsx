@@ -3,12 +3,16 @@ import axios from "axios";
 import "./styles.css";
 
 const ListeInterventions = () => {
+  // State pour stocker toutes les interventions récupérées
   const [interventions, setInterventions] = useState([]);
+  // États des filtres
   const [filtreGravite, setFiltreGravite] = useState("toutes");
   const [filtreLocalisation, setFiltreLocalisation] = useState("");
   const [filtreDate, setFiltreDate] = useState("");
+  // État de chargement
   const [isLoading, setIsLoading] = useState(true);
 
+  // Fonction pour récupérer les interventions depuis l’API
   const fetchInterventions = async () => {
     try {
       setIsLoading(true);
@@ -21,21 +25,24 @@ const ListeInterventions = () => {
     }
   };
 
+  // Fonction pour marquer une intervention comme "terminée"
   const terminerIntervention = async (id) => {
     try {
       await axios.put(`http://localhost:3000/interventions/${id}/finish`, {
         statut: "terminée",
       });
-      fetchInterventions();
+      fetchInterventions(); // Rafraîchit la liste
     } catch (err) {
       console.error("Erreur lors de la mise à jour :", err);
     }
   };
 
+  // Récupération initiale des interventions au montage du composant
   useEffect(() => {
     fetchInterventions();
   }, []);
 
+  // Filtrage des interventions en fonction des critères choisis
   const interventionsFiltrees = interventions.filter((i) => {
     const matchGravite = filtreGravite === "toutes" || i.gravite === filtreGravite;
     const matchLocalisation =
@@ -48,12 +55,14 @@ const ListeInterventions = () => {
     return matchGravite && matchLocalisation && matchDate;
   });
 
+  // Couleurs associées aux différents niveaux de gravité
   const graviteColors = {
-    critique: "#e74c3c",
-    moyenne: "#e67e22",
-    faible: "#27ae60",
+    critique: "#e74c3c", // rouge
+    moyenne: "#e67e22",  // orange
+    faible: "#27ae60",   // vert
   };
 
+  // Affiche un écran de chargement pendant la récupération des données
   if (isLoading) {
     return (
       <div className="loading-container">

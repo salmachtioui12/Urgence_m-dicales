@@ -1,41 +1,48 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
+// ✅ Composant principal pour la page de connexion
 export default function Login() {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate(); // Hook pour rediriger l'utilisateur
+  const [email, setEmail] = useState(""); // Stocke l'email saisi
+  const [password, setPassword] = useState(""); // Stocke le mot de passe
+  const [error, setError] = useState(null); // Stocke un message d'erreur
+  const [success, setSuccess] = useState(null); // Stocke un message de succès
+  const [isLoading, setIsLoading] = useState(false); // Indique si une requête est en cours
 
+  // ✅ Fonction appelée quand le formulaire est soumis
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Empêche le rechargement de la page
     setError(null);
     setSuccess(null);
     setIsLoading(true);
 
     try {
+      // 🔗 Envoi des identifiants au backend
       const res = await fetch("http://localhost:3000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password }), // Envoi email + mot de passe
       });
 
-      const data = await res.json();
+      const data = await res.json(); // Réponse JSON
 
       if (res.ok) {
+        // ✅ Connexion réussie
         console.log("Connexion réussie !");
         console.log("User reçu:", data.user);
 
+        // Stockage du token et infos utilisateur dans le localStorage
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
 
         setSuccess("Connexion réussie !");
         setError("");
 
+        // 🔔 Émet un événement global pour prévenir le reste de l'appli
         window.dispatchEvent(new Event("tokenUpdated"));
 
+        // Redirection après 1s en fonction du rôle de l’utilisateur
         setTimeout(() => {
           const role = data.user.role?.toLowerCase();
           switch (role) {
@@ -54,14 +61,16 @@ export default function Login() {
           }
         }, 1000);
       } else {
+        // ❌ Identifiants incorrects
         setError(data.message || "Identifiants invalides");
       }
     } catch (err) {
+      // ❌ Erreur réseau (API non accessible par exemple)
       console.error(err);
       setError("Erreur réseau");
-      localStorage.removeItem("token");
+      localStorage.removeItem("token"); // Nettoyage du localStorage
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Fin du chargement
     }
   };
 

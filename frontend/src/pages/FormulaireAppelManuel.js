@@ -1,24 +1,30 @@
 import React, { useState } from "react";
 
+// Composant pour créer un nouvel appel d'urgence manuellement
 function FormulaireAppelManuel({ onSubmit, onClose }) {
+  // État local pour stocker les valeurs du formulaire
   const [formData, setFormData] = useState({
     patientName: "",
     description: "",
     localisation: "",
-    gravite: "faible",
+    gravite: "faible", // valeur par défaut
     lat: "",
     lng: "",
   });
 
+  // Fonction pour mettre à jour l'état lors de la saisie d'un champ
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Fonction appelée lors de la soumission du formulaire
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Vérification des champs obligatoires
     const { patientName, description, lat, lng } = formData;
     if (patientName && description && lat && lng && !isNaN(lat) && !isNaN(lng)) {
-      onSubmit(formData);
+      onSubmit(formData); // Envoie les données au parent via la prop onSubmit
     } else {
       alert("Veuillez remplir tous les champs obligatoires.");
     }
@@ -26,15 +32,19 @@ function FormulaireAppelManuel({ onSubmit, onClose }) {
 
   return (
     <div className="modal-overlay">
+      {/* Conteneur de la fenêtre modale */}
       <div className="modal-container">
+        {/* En-tête de la modale */}
         <div className="modal-header">
           <h2>➕ Nouvel Appel d'Urgence</h2>
           <button onClick={onClose} className="close-button">
-            &times;
+            &times; {/* Bouton de fermeture */}
           </button>
         </div>
 
+        {/* Formulaire */}
         <form onSubmit={handleSubmit} className="modal-form">
+          {/* Champs texte dynamiques générés par un .map */}
           {[
             { label: "👤 Nom du patient", name: "patientName", type: "text", required: true },
             { label: "📝 Description", name: "description", type: "text", required: true },

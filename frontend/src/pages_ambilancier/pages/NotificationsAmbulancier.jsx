@@ -312,8 +312,10 @@ const handleUnauthorized = () => {
     }
   };
 
-  const voirDetails = (interventionId) => {
+   const voirDetails = (interventionId) => {
     console.log("Voir détails pour l'intervention:", interventionId);
+
+    navigate("/ambulancier/appels");
   };
 
   return (

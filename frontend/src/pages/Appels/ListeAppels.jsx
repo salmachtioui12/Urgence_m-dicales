@@ -2,31 +2,34 @@ import React, { useEffect, useState } from "react";
 import "./ListeAppels.css";
 
 export default function ListeAppels() {
-  const [appels, setAppels] = useState([]);
-  const [filtre, setFiltre] = useState({
+  // --- États principaux du composant ---
+  const [appels, setAppels] = useState([]); // Stocke la liste brute des appels récupérés depuis l'API
+  const [filtre, setFiltre] = useState({    // Stocke les filtres appliqués par l'utilisateur
     gravite: "",
     etat: "",
     localisation: "",
     dateHeureMin: "",
   });
-  const [appelsFiltres, setAppelsFiltres] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedAppel, setSelectedAppel] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState("patient");
+  const [appelsFiltres, setAppelsFiltres] = useState([]); // Liste des appels filtrés
+  const [isLoading, setIsLoading] = useState(true);       // Indique si les données sont en cours de chargement
+  const [selectedAppel, setSelectedAppel] = useState(null); // Appel sélectionné pour l'affichage dans le modal
+  const [showModal, setShowModal] = useState(false);        // Gère l'ouverture/fermeture du modal
+  const [activeTab, setActiveTab] = useState("patient");    // Onglet actif dans le modal
 
+  // --- Fonction utilitaire pour gérer les textes en arabe/hébreu ---
   const isRTL = (text) => {
     if (!text) return false;
     const rtlChars = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
     return rtlChars.test(text);
   };
 
+  // --- Fonction pour récupérer les appels depuis le backend ---
   const fetchAppels = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("http://localhost:3000/appels");
+      const res = await fetch("http://localhost:3000/appels"); // API REST locale
       const data = await res.json();
-      setAppels(data);
+      setAppels(data);  // On stocke les appels récupérés
       setIsLoading(false);
     } catch (err) {
       console.error("Erreur fetch appels:", err);
@@ -34,10 +37,12 @@ export default function ListeAppels() {
     }
   };
 
+  // --- useEffect pour charger les appels au montage du composant ---
   useEffect(() => {
     fetchAppels();
   }, []);
 
+  // --- useEffect pour filtrer et trier les appels dès qu'ils changent ---
   useEffect(() => {
     const resultats = appels.filter((appel) => {
       const matchGravite = !filtre.gravite || appel.gravite === filtre.gravite;
@@ -52,6 +57,7 @@ export default function ListeAppels() {
       return matchGravite && matchEtat && matchLocalisation && matchDateHeure;
     });
 
+    // Trie les appels par date décroissante (les plus récents en premier)
     const resultatsTries = [...resultats].sort((a, b) => 
       new Date(b.heureAppel) - new Date(a.heureAppel)
     );
@@ -59,12 +65,14 @@ export default function ListeAppels() {
     setAppelsFiltres(resultatsTries);
   }, [filtre, appels]);
 
+  // --- Couleurs associées à chaque gravité ---
   const graviteColors = {
     critique: "#e74c3c",
     moyenne: "#e67e22",
     faible: "#27ae60",
   };
 
+  // --- Formatage de la date ---
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const options = { 
@@ -78,6 +86,7 @@ export default function ListeAppels() {
     return new Date(dateString).toLocaleString('fr-FR', options);
   };
 
+  // --- Calcul de la durée d'une intervention ---
   const getDureeIntervention = (intervention) => {
     if (!intervention?.debutIntervention) return "N/A";
     
@@ -92,22 +101,26 @@ export default function ListeAppels() {
     return `${diffMins} min`;
   };
 
+  // --- Affichage des infos ambulance ---
   const getAmbulanceInfo = (appel) => {
     if (!appel.ambulanceAffectee) return "Aucune ambulance affectée";
     return `Ambulance ${appel.ambulanceAffectee.type} (ID: ${appel.ambulanceAffectee.id})`;
   };
 
+  // --- Gestion du clic sur "Plus de détails" ---
   const handleShowDetails = (appel) => {
     setSelectedAppel(appel);
     setShowModal(true);
-    setActiveTab("patient");
+    setActiveTab("patient"); // Par défaut, on ouvre sur l'onglet patient
   };
 
+  // --- Fermeture du modal ---
   const closeModal = () => {
     setShowModal(false);
     setSelectedAppel(null);
   };
 
+  // --- Écran de chargement ---
   if (isLoading) {
     return (
       <div className="loading-container">
@@ -119,11 +132,14 @@ export default function ListeAppels() {
 
   return (
     <div className="liste-appels-container">
+      {/* --- En-tête --- */}
       <div className="header">
         <h2 className="header-title">Liste des Appels d'Urgence</h2>
       </div>
 
+      {/* --- Filtres --- */}
       <div className="filtres-container">
+        {/* Filtre gravité */}
         <select
           value={filtre.gravite}
           onChange={(e) => setFiltre({ ...filtre, gravite: e.target.value })}
@@ -135,6 +151,7 @@ export default function ListeAppels() {
           <option value="faible">Faible</option>
         </select>
 
+        {/* Filtre état */}
         <select
           value={filtre.etat}
           onChange={(e) => setFiltre({ ...filtre, etat: e.target.value })}
@@ -146,6 +163,7 @@ export default function ListeAppels() {
           <option value="terminée">Terminée</option>
         </select>
 
+        {/* Filtre localisation */}
         <input
           type="text"
           placeholder="Rechercher localisation"
@@ -154,6 +172,7 @@ export default function ListeAppels() {
           className="filtre-input"
         />
 
+        {/* Filtre par date */}
         <input
           type="datetime-local"
           value={filtre.dateHeureMin}
@@ -163,6 +182,7 @@ export default function ListeAppels() {
         />
       </div>
 
+      {/* --- Statistiques générales --- */}
       <div className="stats-container">
         <div className="stat-card">
           <h3>Total</h3>

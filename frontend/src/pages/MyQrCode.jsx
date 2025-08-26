@@ -4,18 +4,22 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
 export default function MyQrCode() {
+  // État qui va contenir l'URL de l'image du QR code
   const [qrUrl, setQrUrl] = useState("");
+  // useRef pour cibler la div contenant le QR code afin de l'exporter en PDF
   const qrRef = useRef(null);
 
+  // useEffect s'exécute au montage du composant
   useEffect(() => {
     const fetchQr = async () => {
       try {
+        // Récupérer l'utilisateur connecté (stocké dans le localStorage)
         const user = JSON.parse(localStorage.getItem("user"));
         if (!user) return;
 
-        // Demande au backend de renvoyer le QR (basé sur le qrToken stocké)
+        // Appel au backend pour obtenir le QR code de cet utilisateur
         const res = await axios.get(`http://localhost:3000/api/auth/qr/${user.id}`);
-        setQrUrl(res.data.qr);
+        setQrUrl(res.data.qr); // Sauvegarde l’URL du QR dans l’état
       } catch (err) {
         console.error("Erreur récupération QR:", err);
       }
@@ -24,18 +28,25 @@ export default function MyQrCode() {
     fetchQr();
   }, []);
 
+  // Fonction pour télécharger le QR code en PDF
   const handleDownloadPDF = async () => {
-    if (!qrRef.current) return;
+    if (!qrRef.current) return; // Si le QR n’est pas encore affiché → on sort
 
+    // On prend un "screenshot" de la div contenant le QR
     const canvas = await html2canvas(qrRef.current);
     const imgData = canvas.toDataURL("image/png");
+
+    // Création d'un PDF vide avec jsPDF
     const pdf = new jsPDF();
+
+    // Ajustement de la taille de l’image au format du PDF
     const imgProps = pdf.getImageProperties(imgData);
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
+    // Ajout de l’image dans le PDF
     pdf.addImage(imgData, "PNG", 0, 20, pdfWidth, pdfHeight);
-    pdf.save("MonQRCode.pdf");
+    pdf.save("MonQRCode.pdf"); // Téléchargement
   };
 
   return (

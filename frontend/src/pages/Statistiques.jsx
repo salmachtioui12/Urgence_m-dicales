@@ -1,47 +1,57 @@
 import React, { useEffect, useState, useRef } from "react";
-import LineChartAppels from "../components/LineChartAppels";
+import LineChartAppels from "../components/LineChartAppels"; // Composant pour afficher le graphique des appels
 
 export default function Statistiques() {
-  const [appelsParHeure, setAppelsParHeure] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState(null);
-  const wsRef = useRef(null);
+  // -------- États principaux --------
+  const [appelsParHeure, setAppelsParHeure] = useState([]); // Stocke les appels regroupés par heure
+  const [loading, setLoading] = useState(true);             // Indique si les données sont en cours de chargement
+  const [lastUpdate, setLastUpdate] = useState(null);       // Date et heure de la dernière mise à jour
+  const wsRef = useRef(null);                               // Référence pour le WebSocket
 
+  // -------- Effet au montage du composant --------
   useEffect(() => {
+    // Création du WebSocket
     wsRef.current = new WebSocket("ws://localhost:3000");
 
+    // Lorsque la connexion est ouverte
     wsRef.current.onopen = () => {
       console.log("✅ WebSocket connecté Statistiques");
-      setLoading(true);
-      wsRef.current.send(JSON.stringify({ action: "getAppelsParHeure" }));
+      setLoading(true); // On est en mode chargement
+      wsRef.current.send(JSON.stringify({ action: "getAppelsParHeure" })); // Demande des données
     };
 
+    // Réception de messages depuis le serveur
     wsRef.current.onmessage = (message) => {
       try {
         const parsed = JSON.parse(message.data);
+        // Vérifie si c'est une mise à jour des appels par heure
         if (parsed.type === "APPELS_PAR_HEURE_UPDATE") {
-          setAppelsParHeure(parsed.data);
-          setLoading(false);
-          setLastUpdate(new Date());
+          setAppelsParHeure(parsed.data); // Met à jour les données
+          setLoading(false);               // Fin du chargement
+          setLastUpdate(new Date());       // Met à jour l'heure de la dernière mise à jour
         }
       } catch (err) {
         console.error("Erreur parsing WebSocket message", err);
       }
     };
 
+    // Gestion des erreurs WebSocket
     wsRef.current.onerror = (error) => {
       console.error("WebSocket error:", error);
     };
 
+    // Lors de la fermeture de la connexion
     wsRef.current.onclose = () => {
       console.log("❌ WebSocket déconnecté Statistiques");
     };
 
+    // Cleanup : fermeture du WebSocket lors du démontage
     return () => {
       if (wsRef.current) wsRef.current.close();
     };
-  }, []);
+  }, []); // [] : s'exécute une seule fois au montage
 
+  // -------- Affichage en cas de chargement --------
   if (loading) {
     return (
       <div

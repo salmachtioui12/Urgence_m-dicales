@@ -1,25 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 
+// Composant principal pour le layout de l'ambulancier
 export default function LayoutAmbulancier() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 970);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [hasNotifications, setHasNotifications] = useState(true);
+  const navigate = useNavigate();   // Hook pour naviguer programmétiquement
+  const location = useLocation();   // Hook pour obtenir la route actuelle
 
+  // -------- États du composant --------
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 970); // Détecte si c'est un écran mobile
+  const [menuOpen, setMenuOpen] = useState(false);                  // État du menu burger sur mobile
+  const [hasNotifications, setHasNotifications] = useState(true);   // Notifications actives
+
+  // -------- Fonction pour cliquer sur les notifications --------
   const handleNotificationClick = () => {
-    setHasNotifications(false);
-    navigate("/ambulancier/notifications");
+    setHasNotifications(false);                // On supprime le badge
+    navigate("/ambulancier/notifications");   // On redirige vers la page notifications
   };
 
-  const isAppelsPage = location.pathname === "/hopital/appels";
+  const isAppelsPage = location.pathname === "/hopital/appels"; // Vérifie si on est sur la page "Appels"
 
+  // -------- Effet pour détecter le redimensionnement de la fenêtre --------
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      if (!mobile) setMenuOpen(false);
+      if (!mobile) setMenuOpen(false); // Fermer le menu burger si écran large
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);

@@ -1,56 +1,67 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { jwtDecode } from "jwt-decode";
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react"; // Import des hooks React
+import axios from "axios"; // Pour effectuer les requêtes HTTP
+import { jwtDecode } from "jwt-decode"; // Pour décoder le JWT stocké
+import { useNavigate } from 'react-router-dom'; // Pour naviguer entre les pages
 
+// Composant principal qui affiche les interventions de l'ambulancier
 export default function MesInterventions() {
-  const [interventions, setInterventions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [erreur, setErreur] = useState("");
-const navigate = useNavigate();
+  const [interventions, setInterventions] = useState([]); // Stocke la liste des interventions
+  const [loading, setLoading] = useState(true);           // Indique si les données sont en cours de chargement
+  const [erreur, setErreur] = useState("");              // Stocke les messages d'erreur
+  const navigate = useNavigate();                         // Hook pour naviguer programmétiquement
 
-  const token = localStorage.getItem("token");
-const handleUnauthorized = () => {
-  localStorage.removeItem('token'); // On supprime le token
-  navigate('/login');              // Redirection vers la page login
-};
+  const token = localStorage.getItem("token");           // Récupère le token JWT dans le localStorage
 
+  // Fonction appelée si l'utilisateur n'est pas autorisé (token invalide ou expiré)
+  const handleUnauthorized = () => {
+    localStorage.removeItem('token'); // Supprime le token
+    navigate('/login');               // Redirige vers la page de login
+  };
+
+  // -------- useEffect pour charger les interventions au montage du composant --------
   useEffect(() => {
     const fetchInterventions = async () => {
       try {
+        // Si aucun token, l'utilisateur n'est pas authentifié
         if (!token) {
           setErreur("Utilisateur non authentifié");
           return;
         }
 
+        // Décodage du JWT pour récupérer l'ID de l'ambulancier
         const decoded = jwtDecode(token);
         const ambulancierId = decoded.id;
 
+        // Requête HTTP GET pour récupérer les interventions de l'ambulancier
         const response = await axios.get(
           `http://localhost:3000/interventions/mes-interventions`,
           {
             headers: {
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${token}`, // Envoie le token dans les headers
             },
           }
         );
 
+        // On stocke la liste des interventions dans le state
         setInterventions(response.data);
       } catch (err) {
-         if (err.response?.status === 403) {
-    handleUnauthorized();
-  } else {
-    setErreur("Erreur lors du chargement des interventions.");
-  }
-        
-        console.error(err);
+        // Si la réponse du serveur est 403 (non autorisé), on redirige vers login
+        if (err.response?.status === 403) {
+          handleUnauthorized();
+        } else {
+          // Autres erreurs
+          setErreur("Erreur lors du chargement des interventions.");
+        }
+
+        console.error(err); // Log pour débogage
       } finally {
-        setLoading(false);
+        setLoading(false); // Fin du chargement, succès ou erreur
       }
     };
 
-    fetchInterventions();
-  }, [token]);
+    fetchInterventions(); // Appel de la fonction fetch
+  }, [token]); // Dépendance sur le token (recharge si le token change)
+
 
   // Styles CSS
   const styles = `

@@ -1,13 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
-
 import { Pie, Line } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title,   PointElement,  LineElement} from 'chart.js';
-
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, PointElement, LineElement } from 'chart.js';
 import './dashboard.css';
 import WebSocketNotifications from '../WebSocketNotifications';
 
 // Enregistre les composants de Chart.js une seule fois
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title,  LineElement,  PointElement);
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, LineElement, PointElement);
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
@@ -16,7 +14,39 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [zones, setZones] = useState([]);
   const chartRef = useRef(null);
-const [appelsParMinute, setAppelsParMinute] = useState([]);
+  const [appelsParMinute, setAppelsParMinute] = useState([]);
+  const [zonePage, setZonePage] = useState(0);
+  
+  const zonesPerPage = 6;
+  
+  // Styles pour les cartes
+  const cardStyles = {
+    paragraph: { 
+      fontSize: '16px', 
+      margin: '4px 0', 
+      display: 'flex', 
+      justifyContent: 'space-between' 
+    },
+    statValue: { 
+      fontSize: '16px', 
+      fontWeight: 'bold' 
+    },
+    largeStatValue: { 
+      fontSize: '18px', 
+      fontWeight: 'bold', 
+      lineHeight: '1.2' 
+    },
+    timeLabel: { 
+      fontSize: '10px', 
+      marginTop: '2px', 
+      color: '#495057' 
+    },
+    cardTitle: {
+      fontSize: '14px', 
+      marginBottom: '15px', 
+      textAlign: 'center'
+    }
+  };
 
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:3000');
@@ -31,8 +61,7 @@ const [appelsParMinute, setAppelsParMinute] = useState([]);
         setStats(parsed.data);
         setZones(parsed.data.urgencesZones || []);
         setIsLoading(false);
-         setAppelsParMinute(parsed.data.appelparheure || []);
-        
+        setAppelsParMinute(parsed.data.appelparheure || []);
       }
       if (parsed.type === 'DERNIERS_APPELS') {
         setLastCalls(parsed.data);
@@ -85,12 +114,11 @@ const [appelsParMinute, setAppelsParMinute] = useState([]);
       default: return gravityId || 'Inconnue';
     }
   };
-const [zonePage, setZonePage] = useState(0);
-const zonesPerPage = 6;
 
-const startIndex = zonePage * zonesPerPage;
-const paginatedZones = zones.slice(startIndex, startIndex + zonesPerPage);
-const totalPages = Math.ceil(zones.length / zonesPerPage);
+  const startIndex = zonePage * zonesPerPage;
+  const paginatedZones = zones.slice(startIndex, startIndex + zonesPerPage);
+  const totalPages = Math.ceil(zones.length / zonesPerPage);
+  
   const gravityChartData = {
     labels: displayedStats?.repartitionUrgences?.map(item => getGravityLabel(item._id)) || [],
     datasets: [
@@ -151,51 +179,49 @@ const totalPages = Math.ceil(zones.length / zonesPerPage);
     }
   };
 
-const appelsParMinuteData = {
-labels: appelsParMinute.map(appel => {
-  const [heureStr, minuteStr] = appel.time.split(':'); // "15:03" → ["15", "03"]
-  let heure = parseInt(heureStr, 10) + 1;
-  if (heure >= 24) heure -= 24; // pour ne pas dépasser 23h
-  return `${heure.toString().padStart(2, '0')}:${minuteStr}`;
-}),
-
-
-  datasets: [
-    {
-      label: 'Appels par minute',
-      data: appelsParMinute.map(appel => appel.total),
-      borderColor: 'rgba(75, 192, 192, 1)',
-      backgroundColor: 'rgba(75, 192, 192, 0.2)',
-      tension: 0.3,
-      fill: true,
-    }
-  ]
-};
-
-
-const appelsParMinuteOptions = {
-  responsive: true,
-  plugins: {
-    legend: {
-      display: true,
-    },
-  },
-  scales: {
-    x: {
-      title: {
-        display: true,
-        text: 'Heure (HH:MM)'
+  const appelsParMinuteData = {
+    labels: appelsParMinute.map(appel => {
+      const [heureStr, minuteStr] = appel.time.split(':');
+      let heure = parseInt(heureStr, 10) + 1;
+      if (heure >= 24) heure -= 24;
+      return `${heure.toString().padStart(2, '0')}:${minuteStr}`;
+    }),
+    datasets: [
+      {
+        label: 'Appels par minute',
+        data: appelsParMinute.map(appel => appel.total),
+        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        tension: 0.3,
+        fill: true,
       }
-    },
-    y: {
-      title: {
+    ]
+  };
+
+  const appelsParMinuteOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
         display: true,
-        text: 'Nombre d’appels'
       },
-      beginAtZero: true
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Heure (HH:MM)'
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Nombre d’appels'
+        },
+        beginAtZero: true
+      }
     }
-  }
-};
+  };
+  
   const getStatusBadgeClass = (status) => {
     switch(status.toLowerCase()) {
       case 'terminé':
@@ -218,9 +244,7 @@ const appelsParMinuteOptions = {
   }
 
   return (
-    
     <div className="dashboard-container">
-     
       <div className="dashboard-header">
         <h1>Tableau de bord - Urgences</h1>
       </div>
@@ -228,37 +252,68 @@ const appelsParMinuteOptions = {
       <div className="stats-grid">
         <div className="stat-card">
           <h2>Urgences</h2>
-          <p>Terminées : <span className="stat-value">{displayedStats?.urgences?.appelterminer}</span></p>
-          <p>En attente : <span className="stat-value">{displayedStats?.urgences?.appelenattend}</span></p>
-          <p>En intervention : <span className="stat-value">{displayedStats?.urgences?.appeleninterv}</span></p>
+          <p style={cardStyles.paragraph}>
+            Terminées : <span style={cardStyles.statValue}>
+              {displayedStats?.urgences?.appelterminer}
+            </span>
+          </p>
+          <p style={cardStyles.paragraph}>
+            En attente : <span style={cardStyles.statValue}>
+              {displayedStats?.urgences?.appelenattend}
+            </span>
+          </p>
+          <p style={cardStyles.paragraph}>
+            En intervention : <span style={cardStyles.statValue}>
+              {displayedStats?.urgences?.appeleninterv}
+            </span>
+          </p>
         </div>
 
-<div className="stat-card compact-time">
-  <h2>Temps moyen</h2>
-  <div className="time-stats">
-    <div className="time-value">
-      <span className="stat-value large">{displayedStats?.tempsReponse?.moyenneMinutes ?? 0}</span>
-      <span className="time-label">minutes</span>
-    </div>
-    <div className="time-divider">≈</div>
-    <div className="time-value">
-      <span className="stat-value">{displayedStats?.tempsReponse?.moyenneHeures ?? 0}</span>
-      <span className="time-label">heures</span>
-    </div>
-  </div>
-</div>
-
+        <div className="stat-card ">
+          <h2 >Temps moyen</h2>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', marginTop: '5px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span style={cardStyles.largeStatValue}>
+                {displayedStats?.tempsReponse?.moyenneMinutes ?? 0}
+              </span>
+              <span style={cardStyles.timeLabel}>minutes</span>
+            </div>
+            <div style={{ fontSize: '14px', color: '#adb5bd', margin: '0 10px', opacity: '0.6' }}>≈</div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span style={cardStyles.statValue}>
+                {displayedStats?.tempsReponse?.moyenneHeures ?? 0}
+              </span>
+              <span style={cardStyles.timeLabel}>heures</span>
+            </div>
+          </div>
+        </div>
 
         <div className="stat-card">
           <h2>Occupation</h2>
-          <p><span className="stat-value">{displayedStats?.occupation}</span>%</p>
+          <p style={cardStyles.paragraph}>
+            <span style={cardStyles.statValue}>
+              {displayedStats?.occupation}%
+            </span>
+          </p>
         </div>
 
         <div className="stat-card">
           <h2>Ambulances</h2>
-          <p>Total : <span className="stat-value">{displayedStats?.ambulances?.total}</span></p>
-          <p>Disponibles : <span className="stat-value">{displayedStats?.ambulances?.disponibles}</span></p>
-          <p>En mission : <span className="stat-value">{displayedStats?.ambulances?.missions}</span></p>
+          <p style={cardStyles.paragraph}>
+            Total : <span style={cardStyles.statValue}>
+              {displayedStats?.ambulances?.total}
+            </span>
+          </p>
+          <p style={cardStyles.paragraph}>
+            Disponibles : <span style={cardStyles.statValue}>
+              {displayedStats?.ambulances?.disponibles}
+            </span>
+          </p>
+          <p style={cardStyles.paragraph}>
+            En mission : <span style={cardStyles.statValue}>
+              {displayedStats?.ambulances?.missions}
+            </span>
+          </p>
         </div>
       </div>
 
@@ -289,72 +344,70 @@ const appelsParMinuteOptions = {
           </table>
         </div>
 
-       <div className="data-card">
-  <h2>📍 Répartition par zone</h2>
-  <table className="zones-table">
-    <thead>
-      <tr>
-        <th>Zone</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      {paginatedZones.map((zone, index) => (
-        <tr key={startIndex + index}>
-          <td>{zone._id}</td>
-          <td>{zone.total}</td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
+        <div className="data-card">
+          <h2>📍 Répartition par zone</h2>
+          <table className="zones-table">
+            <thead>
+              <tr>
+                <th>Zone</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedZones.map((zone, index) => (
+                <tr key={startIndex + index}>
+                  <td>{zone._id}</td>
+                  <td>{zone.total}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-  {/* Pagination */}
-  {zones.length > zonesPerPage && (
-    <div className="pagination-controls">
-      <button 
-        onClick={() => setZonePage(zonePage - 1)} 
-        disabled={zonePage === 0}
-      >
-        Précédent
-      </button>
+          {zones.length > zonesPerPage && (
+            <div className="pagination-controls">
+              <button 
+                onClick={() => setZonePage(zonePage - 1)} 
+                disabled={zonePage === 0}
+              >
+                Précédent
+              </button>
 
-      <span> Page {zonePage + 1} / {totalPages} </span>
+              <span> Page {zonePage + 1} / {totalPages} </span>
 
-      <button 
-        onClick={() => setZonePage(zonePage + 1)} 
-        disabled={zonePage + 1 >= totalPages}
-      >
-        Suivant
-      </button>
-    </div>
-  )}
-</div>
+              <button 
+                onClick={() => setZonePage(zonePage + 1)} 
+                disabled={zonePage + 1 >= totalPages}
+              >
+                Suivant
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-    {displayedStats?.repartitionUrgences?.length > 0 && (
-  <div className="data-card full-width">
-    <h2>📊 Statistiques graphiques</h2>
-    <div className="charts-row">
-      <div className="chart-container half">
-        <h3>⚠️ Répartition par gravité</h3>
-        <Pie 
-          ref={chartRef}
-          data={gravityChartData} 
-          options={gravityChartOptions}
-          redraw={false}
-        />
-      </div>
-    <div className="chart-container half">
-  <h3>📈 Appels par minute</h3>
-  <Line
-    data={appelsParMinuteData}
-    options={appelsParMinuteOptions}
-  />
-</div>
-    </div>
-  </div>
-)}
-
+      {displayedStats?.repartitionUrgences?.length > 0 && (
+        <div className="data-card full-width">
+          <h2>📊 Statistiques graphiques</h2>
+          <div className="charts-row">
+            <div className="chart-container half">
+              <h3>⚠️ Répartition par gravité</h3>
+              <Pie 
+                ref={chartRef}
+                data={gravityChartData} 
+                options={gravityChartOptions}
+                redraw={false}
+              />
+            </div>
+            <div className="chart-container half">
+              <h3>📈 Appels par minute</h3>
+              <Line
+                data={appelsParMinuteData}
+                options={appelsParMinuteOptions}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

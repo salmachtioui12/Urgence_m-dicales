@@ -1,47 +1,56 @@
+// Import des dépendances React
 import React, { useEffect, useState } from "react";
+// Import du style associé
 import './ListeHopitaux.css';
 
+// ✅ Composant principal
 export default function ListeHopitaux() {
-  const [hopitaux, setHopitaux] = useState([]);
-  const [filtreNom, setFiltreNom] = useState("");
-  const [expandedHopitalId, setExpandedHopitalId] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [dialogConfig, setDialogConfig] = useState({ message: "", onConfirm: () => {} });
-  const [statistiques, setStatistiques] = useState(null);
-  const [statistiquesHopitalId, setStatistiquesHopitalId] = useState(null);
+  // --- États ---
+  const [hopitaux, setHopitaux] = useState([]);   // Liste des hôpitaux
+  const [filtreNom, setFiltreNom] = useState(""); // Filtre par nom (barre de recherche)
+  const [expandedHopitalId, setExpandedHopitalId] = useState(null); // ID de l’hôpital déplié
+  const [currentPage, setCurrentPage] = useState(1); // Page courante (pagination)
+  const itemsPerPage = 5; // Nombre d’items par page
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false); // Affichage du dialogue de confirmation
+  const [dialogConfig, setDialogConfig] = useState({ message: "", onConfirm: () => {} }); // Config du dialogue
+  const [statistiques, setStatistiques] = useState(null); // Statistiques de l’hôpital sélectionné
+  const [statistiquesHopitalId, setStatistiquesHopitalId] = useState(null); // ID de l’hôpital dont les stats sont affichées
 
+  // --- Récupération des hôpitaux ---
   const fetchHopitaux = async () => {
     try {
       const res = await fetch(`http://localhost:3000/api/hopitaux/stocks`);
       const data = await res.json();
-      setHopitaux(data);
+      setHopitaux(data); // Met à jour la liste
     } catch (err) {
       showAlert("Erreur lors du chargement des hôpitaux: " + err.message);
     }
   };
 
+  // --- Récupération des statistiques d’un hôpital ---
   const fetchStatistiques = async (hopitalId) => {
     try {
       const res = await fetch(`http://localhost:3000/stats/hopital/${hopitalId}`);
       const data = await res.json();
-      setStatistiques(data);
-      setStatistiquesHopitalId(hopitalId);
+      setStatistiques(data);         // Stocke les stats
+      setStatistiquesHopitalId(hopitalId); // Associe aux bons détails
     } catch (err) {
       showAlert("Erreur lors du chargement des statistiques: " + err.message);
     }
   };
 
+  // --- Chargement initial ---
   useEffect(() => {
     fetchHopitaux();
   }, []);
 
+  // --- Alerte simple (message uniquement) ---
   const showAlert = (message) => {
     setDialogConfig({ message, onConfirm: () => setShowConfirmDialog(false) });
     setShowConfirmDialog(true);
   };
 
+  // --- Dialogue de confirmation ---
   const showConfirm = (message, onConfirm) => {
     setDialogConfig({
       message,
@@ -50,41 +59,45 @@ export default function ListeHopitaux() {
     setShowConfirmDialog(true);
   };
 
+  // --- Filtrage par nom ---
   const hopitauxFiltres = hopitaux.filter((h) =>
     !filtreNom || (h.nom && h.nom.toLowerCase().includes(filtreNom.toLowerCase()))
   );
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = hopitauxFiltres.slice(indexOfFirstItem, indexOfLastItem);
+  // --- Pagination ---
+  const indexOfLastItem = currentPage * itemsPerPage;       // Dernier index
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;  // Premier index
+  const currentItems = hopitauxFiltres.slice(indexOfFirstItem, indexOfLastItem); // Hôpitaux affichés sur la page
   const totalPages = Math.ceil(hopitauxFiltres.length / itemsPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  // --- Dépliage/Repliage des détails d’un hôpital ---
   function toggleDetails(id) {
     setExpandedHopitalId(expandedHopitalId === id ? null : id);
     if (expandedHopitalId !== id) setStatistiquesHopitalId(null);
   }
 
+  // --- Suppression d’un hôpital ---
   async function deleteHopital(id) {
     showConfirm("Confirmez-vous la suppression de cet hôpital ?", async () => {
       try {
         const res = await fetch(`http://localhost:3000/api/hopitaux/${id}`, { method: "DELETE" });
         if (!res.ok) throw new Error("Erreur lors de la suppression");
-        await fetchHopitaux();
+        await fetchHopitaux(); // Recharge la liste
       } catch (err) {
         showAlert(err.message);
       }
     });
   }
 
+  // --- Style du badge en fonction du statut (ambulances / ambulanciers) ---
   const getStatusBadgeClass = (statut) => {
     if (!statut) return 'status-badge inconnu';
     
-    // Normalise le statut (minuscules, remplace espaces/tirets par underscores)
     const normalizedStatut = statut.toLowerCase()
-      .replace(/[- ]/g, '_')
-      .replace(/[éèê]/g, 'e');
+      .replace(/[- ]/g, '_')      // espace/tiret → underscore
+      .replace(/[éèê]/g, 'e');    // accents → e
     
     switch(normalizedStatut) {
       case 'disponible':
@@ -92,34 +105,31 @@ export default function ListeHopitaux() {
       case 'approuve':
       case 'approuvé':
         return 'status-badge disponible';
-      
       case 'en_intervention':
       case 'en_mission':
       case 'en_attente':
         return 'status-badge en-intervention';
-      
       case 'hors_service':
       case 'inactif':
       case 'rejete':
       case 'rejeté':
         return 'status-badge hors-service';
-      
       case 'en_maintenance':
       case 'en_conge':
       case 'en_congé':
         return 'status-badge en-maintenance';
-      
       default:
         return 'status-badge inconnu';
     }
   };
 
+  // --- Style du badge en fonction du type d’ambulance ---
   const getTypeBadgeClass = (type) => {
     if (!type) return 'status-type inconnu';
     
     const normalizedType = type.toLowerCase()
       .replace(/[éèê]/g, 'e')
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Supprime accents
     
     switch(normalizedType) {
       case 'medicalisee':
@@ -134,6 +144,7 @@ export default function ListeHopitaux() {
     }
   };
 
+  // ✅ Rendu JSX
   return (
     <div className="liste-hopitaux-container">
       {showConfirmDialog && (
@@ -362,7 +373,7 @@ export default function ListeHopitaux() {
           ))
         )}
       </div>
-
+    {/* Pagination */}
       {hopitauxFiltres.length > itemsPerPage && (
         <div className="pagination">
           <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} className="page-btn">&lt;</button>

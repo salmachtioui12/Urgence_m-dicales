@@ -1,27 +1,31 @@
 import React, { useEffect, useRef, useState } from "react";
-import jsQR from "jsqr";
-import axios from "axios";
+import jsQR from "jsqr";                // Librairie pour lire les QR codes
+import axios from "axios";              // Pour faire les requêtes HTTP
 import { useNavigate } from "react-router-dom";
-import * as pdfjsLib from "pdfjs-dist/webpack"; // Pour scanner les PDF
+import * as pdfjsLib from "pdfjs-dist/webpack"; // Pour analyser des PDF et chercher un QR
 import "./LoginQR.css";
 
 export default function LoginQR() {
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [cameraPermission, setCameraPermission] = useState(true);
-  const [isDragOver, setIsDragOver] = useState(false);
+  // ----------------- États -----------------
+  const [error, setError] = useState("");           // Message d'erreur
+  const [success, setSuccess] = useState("");       // Message de succès
+  const [isLoading, setIsLoading] = useState(false); // Indique si une action est en cours
+  const [cameraPermission, setCameraPermission] = useState(true); // Permission caméra
+  const [isDragOver, setIsDragOver] = useState(false); // Gestion du drag&drop
 
   const navigate = useNavigate();
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const fileInputRef = useRef(null);
-  const animationFrameRef = useRef(null);
-  const isScanning = useRef(false);
 
+  // ----------------- Références -----------------
+  const videoRef = useRef(null);       // Flux vidéo
+  const canvasRef = useRef(null);      // Canvas pour analyser les frames vidéo
+  const fileInputRef = useRef(null);   // Input fichier
+  const animationFrameRef = useRef(null); // ID de l’animation pour stopper
+  const isScanning = useRef(false);    // Booléen pour savoir si le scan est actif
+
+  // Au montage → lancer le scanner
   useEffect(() => {
     initScanner();
-    return () => stopScanner();
+    return () => stopScanner(); // Nettoyer à la fermeture
   }, []);
 
   // ----------- Scanner caméra -----------

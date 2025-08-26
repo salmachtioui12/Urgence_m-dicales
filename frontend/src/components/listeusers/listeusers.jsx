@@ -13,45 +13,49 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-
 export default function UserManagement() {
-  // États
-  const [users, setUsers] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [dialogConfig, setDialogConfig] = useState({});
-  const navigate = useNavigate();
-  const [weeklyData, setWeeklyData] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 6;
-const [hopitauxData, setHopitauxData] = useState([]);
+  // ------------------ États (variables réactives) ------------------
+  const [users, setUsers] = useState([]); // Liste des utilisateurs
+  const [stats, setStats] = useState(null); // Statistiques globales
+  const [loading, setLoading] = useState(true); // Gestion du chargement
+  const [error, setError] = useState(null); // Gestion des erreurs
+  const [selectedUser, setSelectedUser] = useState(null); // Utilisateur sélectionné
+  const [showModal, setShowModal] = useState(false); // Affichage de la modale de détails
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false); // Affichage de la boîte de confirmation
+  const [dialogConfig, setDialogConfig] = useState({}); // Configuration de la boîte de dialogue
+  const [weeklyData, setWeeklyData] = useState([]); // Données pour le graphique hebdo
+  const [hopitauxData, setHopitauxData] = useState([]); // Nombre d’ambulanciers par hôpital
 
-  // Calcul des utilisateurs pour la page courante
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1); // Page courante
+  const usersPerPage = 6; // Nombre d’utilisateurs par page
+
+  // Découpe des utilisateurs pour la pagination
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(users.length / usersPerPage);
 
-  const token = localStorage.getItem("token");
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token"); // Récupère le token JWT
 
+  // ------------------ Redirection si non autorisé ------------------
   const handleUnauthorized = () => {
     localStorage.removeItem('token');
     navigate('/login');
   };
 
-  // Effets
+  // ------------------ useEffect (au montage du composant) ------------------
   useEffect(() => {
     fetchUsers();
     fetchStats();
     fetchWeeklyRegistrations();
-    fetchHopitauxAmbulanciers(); 
+    fetchHopitauxAmbulanciers();
   }, []);
 
-  // Fonctions
+  // ------------------ Fonctions API ------------------
+
+  // Charger les utilisateurs
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -63,7 +67,7 @@ const [hopitauxData, setHopitauxData] = useState([]);
     } catch (err) {
       console.error(err);
       if (err.response?.status === 403) {
-        handleUnauthorized();
+        handleUnauthorized(); // Redirection si token invalide
       } else {
         setError('Erreur lors du chargement des données');
       }
@@ -71,17 +75,20 @@ const [hopitauxData, setHopitauxData] = useState([]);
       setLoading(false);
     }
   };
-const fetchHopitauxAmbulanciers = async () => {
-  try {
-    const res = await axios.get("http://localhost:3000/users/users/hopitaux-ambulanciers", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setHopitauxData(res.data);
-  } catch (err) {
-    console.error("Erreur récupération hopitaux+ambulanciers:", err);
-  }
-};
 
+  // Charger le nombre d’ambulanciers par hôpital
+  const fetchHopitauxAmbulanciers = async () => {
+    try {
+      const res = await axios.get("http://localhost:3000/users/users/hopitaux-ambulanciers", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setHopitauxData(res.data);
+    } catch (err) {
+      console.error("Erreur récupération hopitaux+ambulanciers:", err);
+    }
+  };
+
+  // Charger les stats globales
   const fetchStats = async () => {
     try {
       const res = await axios.get("http://localhost:3000/users/users/stats", {
@@ -93,6 +100,7 @@ const fetchHopitauxAmbulanciers = async () => {
     }
   };
 
+  // Charger les créations de comptes par jour
   const fetchWeeklyRegistrations = async () => {
     try {
       const res = await axios.get("http://localhost:3000/users/users/weekly-registrations", {
@@ -104,6 +112,7 @@ const fetchHopitauxAmbulanciers = async () => {
     }
   };
 
+  // ------------------ Boîte de dialogue de confirmation ------------------
   const showConfirm = (message, onConfirm) => {
     setDialogConfig({
       message,
@@ -115,14 +124,17 @@ const fetchHopitauxAmbulanciers = async () => {
     setShowConfirmDialog(true);
   };
 
+  // ------------------ Supprimer un utilisateur ------------------
   const handleDelete = async (id) => {
     showConfirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ?", async () => {
       try {
         await axios.delete(`http://localhost:3000/users/users/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        // Met à jour la liste après suppression
         setUsers(users.filter(user => user._id !== id));
-        // Revenir à la première page si la dernière page devient vide
+
+        // Si la page devient vide, revenir à la précédente
         if (currentUsers.length === 1 && currentPage > 1) {
           setCurrentPage(currentPage - 1);
         }
@@ -133,10 +145,13 @@ const fetchHopitauxAmbulanciers = async () => {
     });
   };
 
+  // ------------------ Afficher détails d’un utilisateur ------------------
   const handleShowDetails = (user) => {
     setSelectedUser(user);
     setShowModal(true);
   };
+
+  // ------------------ Affichage ------------------
 
   // Styles
   const styles = {
@@ -163,7 +178,7 @@ const fetchHopitauxAmbulanciers = async () => {
       padding: "20px",
       backgroundColor: "white",
       borderRadius: "10px",
-      boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+      boxShadow: "0 4px 6px rgba(189, 89, 89, 0.1)",
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
       gap: "20px"

@@ -18,21 +18,25 @@ import {
   X
 } from "lucide-react";
 import WebSocketNotifications from "../WebSocketNotifications";
-
+// Composant principal qui définit le layout (structure générale) du tableau de bord
 export default function LayoutDashboard() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 970);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
-  const [ambulancesOpen, setAmbulancesOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigate = useNavigate(); // Pour naviguer entre les routes
+  const location = useLocation(); // Pour obtenir la route actuelle
 
+  // États de gestion de l’UI
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 970); // Détection si l’écran est mobile
+  const [menuOpen, setMenuOpen] = useState(false); // Gérer l’ouverture du menu en mobile
+  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false); // Panneau notifications
+  const [ambulancesOpen, setAmbulancesOpen] = useState(false); // Sous-menu "Ressources"
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Sidebar en mode mobile
+
+  // Effet : écouter les changements de taille d’écran pour adapter l’affichage mobile/desktop
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 970;
       setIsMobile(mobile);
       if (!mobile) {
+        // En desktop on force la fermeture des menus latéraux
         setMenuOpen(false);
         setSidebarOpen(false);
       }
@@ -41,6 +45,7 @@ export default function LayoutDashboard() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Styles (CSS-in-JS) pour la navigation, les liens, la sidebar, etc.
   const navStyle = {
     backgroundColor: "#ffffff",
     padding: "1rem 2rem",
@@ -95,6 +100,7 @@ export default function LayoutDashboard() {
     color: "#fff",
   };
 
+  // Styles du sous-menu Ressources (desktop)
   const subMenuStyle = {
     position: "absolute",
     top: "100%",
@@ -149,6 +155,7 @@ export default function LayoutDashboard() {
     color: "#fff",
   };
 
+  // Overlay sombre derrière la sidebar
   const overlayStyle = {
     position: "fixed",
     top: 0,
@@ -160,6 +167,7 @@ export default function LayoutDashboard() {
     display: sidebarOpen && isMobile ? "block" : "none",
   };
 
+  // Menu principal avec icônes et chemins de navigation
   const menu = [
     { icon: <Home size={20} />, label: "Accueil", path: "/dashboard" },
     { icon: <Map size={20} />, label: "Cart", path: "/cart" },
@@ -169,7 +177,6 @@ export default function LayoutDashboard() {
     { icon: <BarChart2 size={20} />, label: "Statistiques", path: "/statistiques" },
     { icon: <QrCode size={20} />, label: "MyQrCode", path: "/MyQrCode" },
   ];
-
   return (
     <div>
       {/* Overlay pour mobile */}

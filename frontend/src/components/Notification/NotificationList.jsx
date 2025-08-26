@@ -2,22 +2,29 @@
 import React, { useState } from "react";
 import { useNotification } from "../components/NotificationContext";
 
+// Composant qui affiche une liste de notifications
 const NotificationList = () => {
+  // Récupération du contexte de notification
   const {
-    notifications,
-    canPlaySound,
-    handleEnableSound,
-    clearNotifications,
-    setNotifications,
+    notifications,       // liste des notifications
+    canPlaySound,        // indique si le son peut être joué
+    handleEnableSound,   // active le son (si autorisé par l’utilisateur)
+    clearNotifications,  // supprime toutes les notifications
+    setNotifications,    // met à jour la liste
   } = useNotification();
 
+  // État local pour afficher/masquer la liste complète
   const [showNotifications, setShowNotifications] = useState(false);
 
+  // Fonction pour supprimer UNE notification spécifique (backend + state local)
   const removeNotification = async (id, indexToRemove) => {
     try {
+      // Supprime la notif côté backend
       await fetch(`http://localhost:3000/notifications/${id}`, {
         method: "DELETE",
       });
+
+      // Met à jour la liste localement (supprime la notif correspondante)
       setNotifications((prev) => prev.filter((_, i) => i !== indexToRemove));
     } catch (err) {
       console.error("Erreur suppression:", err);
